@@ -26,15 +26,15 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    const items = await db.lostItem.findMany({
+    const reports = await db.lostReport.findMany({
       where,
       orderBy: { createdAt: 'desc' },
     })
 
-    return NextResponse.json(items)
+    return NextResponse.json(reports)
   } catch (error) {
-    console.error('Error fetching items:', error)
-    return NextResponse.json({ error: 'Failed to fetch items' }, { status: 500 })
+    console.error('Error fetching lost reports:', error)
+    return NextResponse.json({ error: 'Failed to fetch lost reports' }, { status: 500 })
   }
 }
 
@@ -46,43 +46,33 @@ export async function POST(request: NextRequest) {
       description,
       category,
       location,
-      dateFound,
-      imageUrl,
+      dateLost,
       contactName,
       contactPhone,
-      verificationQuestion,
-      verificationAnswer,
       reward,
-      latitude,
-      longitude,
     } = body
 
-    if (!title || !description || !category || !location || !dateFound || !contactName || !contactPhone) {
+    if (!title || !description || !category || !location || !dateLost || !contactName || !contactPhone) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    const item = await db.lostItem.create({
+    const report = await db.lostReport.create({
       data: {
         title,
         description,
         category,
         location,
-        dateFound: new Date(dateFound),
-        imageUrl: imageUrl || null,
+        dateLost: new Date(dateLost),
         contactName,
         contactPhone,
-        status: 'found',
-        verificationQuestion: verificationQuestion || null,
-        verificationAnswer: verificationAnswer || null,
         reward: reward || null,
-        latitude: latitude != null && latitude !== '' ? parseFloat(latitude) : null,
-        longitude: longitude != null && longitude !== '' ? parseFloat(longitude) : null,
+        status: 'active',
       },
     })
 
-    return NextResponse.json(item, { status: 201 })
+    return NextResponse.json(report, { status: 201 })
   } catch (error) {
-    console.error('Error creating item:', error)
-    return NextResponse.json({ error: 'Failed to create item' }, { status: 500 })
+    console.error('Error creating lost report:', error)
+    return NextResponse.json({ error: 'Failed to create lost report' }, { status: 500 })
   }
 }

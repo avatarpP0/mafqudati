@@ -8,6 +8,27 @@ export async function PATCH(
   try {
     const { id } = await params
     const body = await request.json()
+
+    // Verification action: check answer against verificationAnswer
+    if (body.action === 'verify') {
+      const item = await db.lostItem.findUnique({ where: { id } })
+
+      if (!item) {
+        return NextResponse.json({ error: 'Item not found' }, { status: 404 })
+      }
+
+      if (!item.verificationAnswer) {
+        return NextResponse.json({ error: 'No verification question set for this item' }, { status: 400 })
+      }
+
+      const providedAnswer = (body.answer || '').trim().toLowerCase()
+      const correctAnswer = item.verificationAnswer.trim().toLowerCase()
+      const verified = providedAnswer === correctAnswer
+
+      return NextResponse.json({ verified })
+    }
+
+    // Status update action
     const { status } = body
 
     if (!status || !['found', 'claimed'].includes(status)) {

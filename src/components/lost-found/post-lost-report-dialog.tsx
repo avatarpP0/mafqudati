@@ -19,16 +19,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Plus, Loader2, Shield, Gift, MapPin } from 'lucide-react'
+import { AlertCircle, Loader2, Gift } from 'lucide-react'
 import { CATEGORIES } from '@/lib/types'
 import { useToast } from '@/hooks/use-toast'
-import { MapPicker } from '@/components/lost-found/map-picker'
 
-interface PostItemDialogProps {
-  onItemAdded: () => void
+interface PostLostReportDialogProps {
+  onReportAdded: () => void
 }
 
-export function PostItemDialog({ onItemAdded }: PostItemDialogProps) {
+export function PostLostReportDialog({ onReportAdded }: PostLostReportDialogProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
@@ -38,15 +37,10 @@ export function PostItemDialog({ onItemAdded }: PostItemDialogProps) {
     description: '',
     category: '',
     location: '',
-    dateFound: '',
-    imageUrl: '',
+    dateLost: '',
     contactName: '',
     contactPhone: '',
-    verificationQuestion: '',
-    verificationAnswer: '',
     reward: '',
-    latitude: '' as string,
-    longitude: '' as string,
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -54,19 +48,19 @@ export function PostItemDialog({ onItemAdded }: PostItemDialogProps) {
     setLoading(true)
 
     try {
-      const res = await fetch('/api/items', {
+      const res = await fetch('/api/lost-reports', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
 
       if (!res.ok) {
-        throw new Error('فشل في إضافة الشيء')
+        throw new Error('فشل في إضافة البلاغ')
       }
 
       toast({
         title: 'تم بنجاح',
-        description: 'تم نشر الشيء المفقود بنجاح',
+        description: 'تم نشر بلاغ الفقدان. سيقوم النظام بالبحث تلقائياً عن تطابقات.',
       })
 
       setForm({
@@ -74,23 +68,18 @@ export function PostItemDialog({ onItemAdded }: PostItemDialogProps) {
         description: '',
         category: '',
         location: '',
-        dateFound: '',
-        imageUrl: '',
+        dateLost: '',
         contactName: '',
         contactPhone: '',
-        verificationQuestion: '',
-        verificationAnswer: '',
         reward: '',
-        latitude: '',
-        longitude: '',
       })
 
       setOpen(false)
-      onItemAdded()
+      onReportAdded()
     } catch {
       toast({
         title: 'خطأ',
-        description: 'حدث خطأ أثناء نشر الشيء المفقود',
+        description: 'حدث خطأ أثناء نشر بلاغ الفقدان',
         variant: 'destructive',
       })
     } finally {
@@ -102,30 +91,26 @@ export function PostItemDialog({ onItemAdded }: PostItemDialogProps) {
     setForm((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleMapChange = (lat: number, lng: number) => {
-    setForm((prev) => ({ ...prev, latitude: String(lat), longitude: String(lng) }))
-  }
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="lg" className="gap-2 text-base font-semibold shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all">
-          <Plus className="h-5 w-5" />
-          أبلغ عن شيء موجود
+        <Button size="lg" variant="outline" className="gap-2 text-base font-semibold border-2 border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/30">
+          <AlertCircle className="h-5 w-5" />
+          أبلغ عن شيء مفقود
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" dir="rtl">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-right">
-            أبلغ عن شيء وجدته
+            أبلغ عن شيء فقدته
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="title">عنوان الشيء *</Label>
+            <Label htmlFor="lost-title">عنوان الشيء المفقود *</Label>
             <Input
-              id="title"
-              placeholder="مثال: هاتف آيفون أسود"
+              id="lost-title"
+              placeholder="مثال: هاتف آيفون 15 برو ماكس أسود"
               value={form.title}
               onChange={(e) => updateForm('title', e.target.value)}
               required
@@ -133,10 +118,10 @@ export function PostItemDialog({ onItemAdded }: PostItemDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">الوصف *</Label>
+            <Label htmlFor="lost-description">الوصف التفصيلي *</Label>
             <Textarea
-              id="description"
-              placeholder="صف الشيء الذي وجدته بالتفصيل..."
+              id="lost-description"
+              placeholder="صف الشيء المفقود بالتفصيل: اللون، العلامات المميزة، المحتوى..."
               value={form.description}
               onChange={(e) => updateForm('description', e.target.value)}
               rows={3}
@@ -145,7 +130,7 @@ export function PostItemDialog({ onItemAdded }: PostItemDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="category">التصنيف *</Label>
+            <Label htmlFor="lost-category">التصنيف *</Label>
             <Select
               value={form.category}
               onValueChange={(value) => updateForm('category', value)}
@@ -165,9 +150,9 @@ export function PostItemDialog({ onItemAdded }: PostItemDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="location">مكان الوجود *</Label>
+            <Label htmlFor="lost-location">آخر مكان كان فيه *</Label>
             <Input
-              id="location"
+              id="lost-location"
               placeholder="مثال: محطة المترو - الدقي"
               value={form.location}
               onChange={(e) => updateForm('location', e.target.value)}
@@ -175,64 +160,15 @@ export function PostItemDialog({ onItemAdded }: PostItemDialogProps) {
             />
           </div>
 
-          {/* Map Picker */}
           <div className="space-y-2">
-            <Label className="flex items-center gap-1.5">
-              <MapPin className="h-4 w-4 text-primary" />
-              تحديد الموقع على الخريطة (اختياري)
-            </Label>
-            <MapPicker
-              latitude={form.latitude ? parseFloat(form.latitude) : null}
-              longitude={form.longitude ? parseFloat(form.longitude) : null}
-              onChange={handleMapChange}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="dateFound">تاريخ الوجود *</Label>
+            <Label htmlFor="lost-dateLost">تاريخ الفقدان *</Label>
             <Input
-              id="dateFound"
+              id="lost-dateLost"
               type="date"
-              value={form.dateFound}
-              onChange={(e) => updateForm('dateFound', e.target.value)}
+              value={form.dateLost}
+              onChange={(e) => updateForm('dateLost', e.target.value)}
               required
             />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="imageUrl">رابط الصورة (اختياري)</Label>
-            <Input
-              id="imageUrl"
-              placeholder="https://example.com/image.jpg"
-              value={form.imageUrl}
-              onChange={(e) => updateForm('imageUrl', e.target.value)}
-              dir="ltr"
-            />
-          </div>
-
-          {/* Verification Question */}
-          <div className="p-4 rounded-lg border-2 border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 space-y-3">
-            <Label className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400 font-semibold">
-              <Shield className="h-4 w-4" />
-              سؤال التحقق (لمنع الاحتيال) *
-            </Label>
-            <p className="text-xs text-muted-foreground">
-              اطرح سؤالاً لا يعرف إجابته إلا المالك الحقيقي. لن تظهر بيانات التواصل إلا بعد الإجابة الصحيحة.
-            </p>
-            <div className="space-y-2">
-              <Input
-                placeholder="مثال: ما هي العلامة المميزة في خلفية الهاتف؟"
-                value={form.verificationQuestion}
-                onChange={(e) => updateForm('verificationQuestion', e.target.value)}
-                required
-              />
-              <Input
-                placeholder="الإجابة الصحيحة"
-                value={form.verificationAnswer}
-                onChange={(e) => updateForm('verificationAnswer', e.target.value)}
-                required
-              />
-            </div>
           </div>
 
           {/* Reward */}
@@ -242,10 +178,10 @@ export function PostItemDialog({ onItemAdded }: PostItemDialogProps) {
               مكافأة مالية (اختياري)
             </Label>
             <p className="text-xs text-muted-foreground">
-              يمكنك رصد مكافأة تشجيعية لمن يعثر على الشيء
+              رصد مكافأة تشجيعية يزيد من فرص استرجاع الشيء
             </p>
             <Input
-              placeholder="مثال: 200 جنيه"
+              placeholder="مثال: 500 جنيه"
               value={form.reward}
               onChange={(e) => updateForm('reward', e.target.value)}
             />
@@ -253,9 +189,9 @@ export function PostItemDialog({ onItemAdded }: PostItemDialogProps) {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="contactName">اسمك *</Label>
+              <Label htmlFor="lost-contactName">اسمك *</Label>
               <Input
-                id="contactName"
+                id="lost-contactName"
                 placeholder="اسمك الكامل"
                 value={form.contactName}
                 onChange={(e) => updateForm('contactName', e.target.value)}
@@ -263,9 +199,9 @@ export function PostItemDialog({ onItemAdded }: PostItemDialogProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="contactPhone">رقم الهاتف *</Label>
+              <Label htmlFor="lost-contactPhone">رقم الهاتف *</Label>
               <Input
-                id="contactPhone"
+                id="lost-contactPhone"
                 placeholder="01xxxxxxxxx"
                 value={form.contactPhone}
                 onChange={(e) => updateForm('contactPhone', e.target.value)}
@@ -279,10 +215,10 @@ export function PostItemDialog({ onItemAdded }: PostItemDialogProps) {
             {loading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin ml-2" />
-                جاري النشر...
+                جاري النشر والبحث عن تطابقات...
               </>
             ) : (
-              'نشر البلاغ'
+              'نشر بلاغ الفقدان'
             )}
           </Button>
         </form>

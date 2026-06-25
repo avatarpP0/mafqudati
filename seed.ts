@@ -1,12 +1,10 @@
 import { db } from './src/lib/db'
 
 async function seed() {
-  // Check if data already exists
-  const existing = await db.lostItem.count()
-  if (existing > 0) {
-    console.log('Database already has data, skipping seed.')
-    return
-  }
+  // Clear existing data
+  await db.lostItem.deleteMany()
+  await db.lostReport.deleteMany()
+  console.log('Cleared existing data.')
 
   const items = [
     {
@@ -19,6 +17,11 @@ async function seed() {
       contactName: 'أحمد محمد',
       contactPhone: '01012345678',
       status: 'found',
+      verificationQuestion: 'ما هو لون غطاء الهاتف؟',
+      verificationAnswer: 'بني',
+      reward: '٥٠٠ جنيه',
+      latitude: 30.0392,
+      longitude: 31.2089,
     },
     {
       title: 'محفظة جلدية سوداء',
@@ -30,6 +33,11 @@ async function seed() {
       contactName: 'سارة أحمد',
       contactPhone: '01123456789',
       status: 'found',
+      verificationQuestion: 'ما هو اسم البنك المكتوب على البطاقة؟',
+      verificationAnswer: 'البنك الأهلي',
+      reward: '١٠٠ جنيه',
+      latitude: 30.0131,
+      longitude: 31.2085,
     },
     {
       title: 'مفتاح سيارة تويوتا',
@@ -41,6 +49,11 @@ async function seed() {
       contactName: 'محمد علي',
       contactPhone: '01234567890',
       status: 'found',
+      verificationQuestion: 'ما هو لون العلامة المعلقة مع المفتاح؟',
+      verificationAnswer: 'أزرق',
+      reward: null,
+      latitude: 29.9602,
+      longitude: 31.2569,
     },
     {
       title: 'حقيبة ظهر زرقاء',
@@ -52,6 +65,11 @@ async function seed() {
       contactName: 'فاطمة حسن',
       contactPhone: '01098765432',
       status: 'found',
+      verificationQuestion: 'ما هو اسم الجامعة المكتوب على الكتب؟',
+      verificationAnswer: 'جامعة القاهرة',
+      reward: '٢٠٠ جنيه',
+      latitude: 30.0444,
+      longitude: 31.2625,
     },
     {
       title: 'جواز سفر مصري',
@@ -63,6 +81,11 @@ async function seed() {
       contactName: 'خالد إبراهيم',
       contactPhone: '01187654321',
       status: 'found',
+      verificationQuestion: 'ما هو الاسم المكتوب على الجواز؟',
+      verificationAnswer: 'محمد حسين',
+      reward: null,
+      latitude: 30.1219,
+      longitude: 31.4056,
     },
     {
       title: 'ساعة يد ذهبية',
@@ -74,6 +97,11 @@ async function seed() {
       contactName: 'ياسمين عبدالله',
       contactPhone: '01276543210',
       status: 'claimed',
+      verificationQuestion: 'ما هو نوع الساعة؟',
+      verificationAnswer: 'كاسيو',
+      reward: '٣٠٠ جنيه',
+      latitude: 30.0561,
+      longitude: 31.2243,
     },
     {
       title: 'جاكيت شتوي رمادي',
@@ -85,6 +113,11 @@ async function seed() {
       contactName: 'عمر حسين',
       contactPhone: '01065432109',
       status: 'found',
+      verificationQuestion: 'ما هو الماركة المكتوبة على الجاكيت؟',
+      verificationAnswer: 'زارا',
+      reward: null,
+      latitude: 30.0591,
+      longitude: 31.2202,
     },
     {
       title: 'نظارة طبية سوداء',
@@ -96,6 +129,11 @@ async function seed() {
       contactName: 'نور الدين',
       contactPhone: '01154321098',
       status: 'found',
+      verificationQuestion: 'ما هو لون إطار النظارة؟',
+      verificationAnswer: 'أسود',
+      reward: '١٥٠ جنيه',
+      latitude: 30.0444,
+      longitude: 31.2357,
     },
     {
       title: 'لابتوب HP فضي',
@@ -107,6 +145,11 @@ async function seed() {
       contactName: 'منى السيد',
       contactPhone: '01243210987',
       status: 'found',
+      verificationQuestion: 'ما هو لون الحقيبة المحملة باللابتوب؟',
+      verificationAnswer: 'أسود',
+      reward: '١٠٠٠ جنيه',
+      latitude: 30.0266,
+      longitude: 31.2746,
     },
     {
       title: 'بطاقة رخصة قيادة',
@@ -118,6 +161,11 @@ async function seed() {
       contactName: 'حسن محمود',
       contactPhone: '01032109876',
       status: 'found',
+      verificationQuestion: 'ما هو الاسم المكتوب على الرخصة؟',
+      verificationAnswer: 'علي حسن',
+      reward: null,
+      latitude: 30.0306,
+      longitude: 31.2063,
     },
   ]
 
@@ -125,7 +173,72 @@ async function seed() {
     await db.lostItem.create({ data: item })
   }
 
-  console.log(`✅ Seeded ${items.length} items successfully!`)
+  console.log(`✅ Seeded ${items.length} found items successfully!`)
+
+  // Seed LostReport entries
+  const lostReports = [
+    {
+      title: 'فقدت هاتف سامسونج جالكسي S24 أزرق',
+      description: 'فقدت هاتف سامسونج جالكسي S24 لون أزرق مع غطاء شفاف. فقدته في محطة المترو يوم الخميس الماضي. الهاتف يحتوي على صور عائلية مهمة.',
+      category: 'electronics',
+      location: 'محطة المترو - الدقي',
+      dateLost: new Date('2025-03-01'),
+      contactName: 'محمود عبدالرحمن',
+      contactPhone: '01055512345',
+      reward: '١٠٠٠ جنيه',
+      status: 'active',
+    },
+    {
+      title: 'ضاعت محفظتي البنية',
+      description: 'محفظة جلدية بنية اللون تحتوي على بطاقات شخصية وبطاقة بنك مصر. ضاعت مني في مول العرب أمس.',
+      category: 'wallets',
+      location: 'مول العرب - الدور الأرضي',
+      dateLost: new Date('2025-03-02'),
+      contactName: 'منى السيد',
+      contactPhone: '01166678901',
+      reward: '٢٠٠ جنيه',
+      status: 'active',
+    },
+    {
+      title: 'فقدت حقيبتي الجامعية',
+      description: 'حقيبة ظهر سوداء من نوع أديداس تحتوي على لابتوب ديل وكتب كلية الهندسة. فقدتها في منطقة الأزهر.',
+      category: 'bags',
+      location: 'حديقة الأزهر - القاهرة',
+      dateLost: new Date('2025-02-27'),
+      contactName: 'أحمد حسام',
+      contactPhone: '01277789012',
+      reward: '٥٠٠ جنيه',
+      status: 'active',
+    },
+    {
+      title: 'مفقود مفتاح سيارة هيونداي',
+      description: 'مفتاح سيارة هيونداي مع علامة مفتاح حمراء. فقدته في موقف السيارات بالمعادي. السيارة موديل 2023.',
+      category: 'keys',
+      location: 'المعادي - شارع 9',
+      dateLost: new Date('2025-03-03'),
+      contactName: 'كريم يوسف',
+      contactPhone: '01088890123',
+      reward: null,
+      status: 'active',
+    },
+    {
+      title: 'فقدت جواز سفري الأخضر',
+      description: 'جواز سفر مصري أخضر اللون. فقدته في مطار القاهرة الصالة 3. جوازي يحتوي على تأشيرات مهمة.',
+      category: 'documents',
+      location: 'مطار القاهرة الدولي - الصالة 3',
+      dateLost: new Date('2025-03-04'),
+      contactName: 'هاجر محمود',
+      contactPhone: '01199901234',
+      reward: '٢٠٠٠ جنيه',
+      status: 'active',
+    },
+  ]
+
+  for (const report of lostReports) {
+    await db.lostReport.create({ data: report })
+  }
+
+  console.log(`✅ Seeded ${lostReports.length} lost reports successfully!`)
 }
 
 seed()

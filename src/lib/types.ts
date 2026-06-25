@@ -9,8 +9,37 @@ export interface LostItem {
   contactName: string
   contactPhone: string
   status: 'found' | 'claimed'
+  verificationQuestion: string | null
+  verificationAnswer: string | null
+  reward: string | null
+  latitude: number | null
+  longitude: number | null
   createdAt: string
   updatedAt: string
+}
+
+export interface LostReport {
+  id: string
+  title: string
+  description: string
+  category: string
+  location: string
+  dateLost: string
+  contactName: string
+  contactPhone: string
+  reward: string | null
+  status: 'active' | 'found'
+  createdAt: string
+  updatedAt: string
+}
+
+export interface MatchResult {
+  lostItemId: string
+  lostReportId: string
+  lostItemTitle: string
+  lostReportTitle: string
+  matchScore: number
+  reason: string
 }
 
 export const CATEGORIES = [

@@ -11,16 +11,36 @@ datasource db {
 }
 
 model LostItem {
+  id                    String   @id @default(cuid())
+  title                 String
+  description           String
+  category              String
+  location              String
+  dateFound             DateTime
+  imageUrl              String?
+  contactName           String
+  contactPhone          String
+  status                String   @default("found")
+  verificationQuestion  String?
+  verificationAnswer    String?
+  reward                String?
+  latitude              Float?
+  longitude             Float?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model LostReport {
   id           String   @id @default(cuid())
   title        String
   description  String
   category     String
   location     String
-  dateFound    DateTime
-  imageUrl     String?
+  dateLost     DateTime
   contactName  String
   contactPhone String
-  status       String   @default("found")
+  reward       String?
+  status       String   @default("active")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
