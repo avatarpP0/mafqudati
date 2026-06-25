@@ -32,8 +32,8 @@ interface MatchItem {
     location: string
     dateFound: string
     imageUrl: string | null
-    contactName: string
-    contactPhone: string
+    hasVerification: boolean
+    verificationQuestion: string | null
     reward: string | null
   } | null
 }

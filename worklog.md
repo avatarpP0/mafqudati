@@ -139,3 +139,40 @@ Stage Summary:
 - Feature 4 (Reward System): Reward badges on cards and detail views ✅
 - All APIs verified working (200 status)
 - Browser testing confirms all features functional
+
+---
+Task ID: 3-security
+Agent: Main Agent
+Task: Implement security & trust features (rate limiting, answer obfuscation, reward terms)
+
+Work Log:
+- Created `/src/lib/security.ts` with:
+  - In-memory rate limiter (3 attempts per item per IP, 15-min lock)
+  - `sanitizeLostItem()` to strip `verificationAnswer` from API responses
+  - `sanitizeLostItems()` for batch sanitization
+- Updated type `LostItem` to remove `verificationAnswer`, add `hasVerification` boolean
+- Updated `GET /api/items` to strip `verificationAnswer` from all responses
+- Updated `POST /api/items` to strip `verificationAnswer` from creation response, made verification Q&A required
+- Updated `PATCH /api/items/[id]` with:
+  - Rate limiting on verify action (3 max attempts, 429 response when locked)
+  - Returns `remainingAttempts` and `rateLimited` fields
+  - Never returns the actual answer
+  - Clears rate limit on successful verification
+- Updated `GET /api/match` to remove contact details from match results (requires verification first)
+- Updated `ItemDetailDialog` with:
+  - Attempts counter display (متبقي X محاولات)
+  - Rate limit lock UI (حظر المحاولات with Ban icon)
+  - 429 status handling
+  - Reward terms & conditions disclaimer (تنويه قانوني)
+- Updated `ai-match-results.tsx` to use safe item structure (no contact info)
+- Updated `page.tsx` to use `hasVerification` instead of `verificationQuestion`
+- Verified with curl: `verificationAnswer` never appears in any API response
+- Verified with Agent Browser: rate limiting works (3 wrong → locked)
+- Verified with browser JS eval: `hasAnswerInResponse: false`
+
+Stage Summary:
+- Security Fix 1 (Rate Limiting): Max 3 verification attempts per item per IP, 15-min lock ✅
+- Security Fix 2 (Answer Obfuscation): verificationAnswer NEVER sent to frontend ✅
+- Security Fix 3 (Reward Terms): Legal disclaimer added to all reward displays ✅
+- All APIs verified: verificationAnswer absent from responses
+- Zero errors in console and lint

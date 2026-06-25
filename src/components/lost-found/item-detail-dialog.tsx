@@ -25,6 +25,9 @@ import {
   Gift,
   Eye,
   EyeOff,
+  AlertTriangle,
+  Scale,
+  Ban,
 } from 'lucide-react'
 import { LostItem, CATEGORIES, CATEGORY_COLORS } from '@/lib/types'
 import { format } from 'date-fns'
@@ -40,7 +43,9 @@ interface ItemDetailDialogProps {
   onItemClaimed: () => void
 }
 
-type VerificationState = 'idle' | 'verifying' | 'success' | 'failed'
+type VerificationState = 'idle' | 'verifying' | 'success' | 'failed' | 'locked'
+
+const MAX_ATTEMPTS = 3
 
 export function ItemDetailDialog({
   item,
@@ -53,6 +58,8 @@ export function ItemDetailDialog({
   const [verifyAnswer, setVerifyAnswer] = useState('')
   const [verifyState, setVerifyState] = useState<VerificationState>('idle')
   const [contactRevealed, setContactRevealed] = useState(false)
+  const [remainingAttempts, setRemainingAttempts] = useState(MAX_ATTEMPTS)
+  const [rateLimitMessage, setRateLimitMessage] = useState<string | null>(null)
   const { toast } = useToast()
 
   // Reset state when item changes
@@ -61,6 +68,8 @@ export function ItemDetailDialog({
       setVerifyAnswer('')
       setVerifyState('idle')
       setContactRevealed(false)
+      setRemainingAttempts(MAX_ATTEMPTS)
+      setRateLimitMessage(null)
     }
     onOpenChange(newOpen)
   }
@@ -72,7 +81,7 @@ export function ItemDetailDialog({
   const categoryColor =
     CATEGORY_COLORS[item.category] || CATEGORY_COLORS.other
 
-  const hasVerification = !!item.verificationQuestion
+  const hasVerification = !!item.hasVerification
   const showContact = !hasVerification || contactRevealed || item.status === 'claimed'
 
   const handleVerify = async () => {
@@ -93,9 +102,27 @@ export function ItemDetailDialog({
         body: JSON.stringify({ action: 'verify', answer: verifyAnswer }),
       })
 
+      const data = await res.json()
+
+      // Handle rate limiting (429)
+      if (res.status === 429 || data.rateLimited) {
+        setVerifyState('locked')
+        setRemainingAttempts(0)
+        setRateLimitMessage(data.message || 'تم تجاوز الحد الأقصى للمحاولات. يرجى المحاولة لاحقاً.')
+        toast({
+          title: 'تم حظر المحاولات',
+          description: data.message || 'تم تجاوز الحد الأقصى للمحاولات.',
+          variant: 'destructive',
+        })
+        return
+      }
+
       if (!res.ok) throw new Error('فشل في التحقق')
 
-      const data = await res.json()
+      // Update remaining attempts from backend response
+      if (data.remainingAttempts !== undefined) {
+        setRemainingAttempts(data.remainingAttempts)
+      }
 
       if (data.verified) {
         setVerifyState('success')
@@ -106,9 +133,14 @@ export function ItemDetailDialog({
         })
       } else {
         setVerifyState('failed')
+        // Check if now rate limited
+        if (data.rateLimited) {
+          setVerifyState('locked')
+          setRateLimitMessage(data.message)
+        }
         toast({
           title: 'إجابة خاطئة',
-          description: 'الإجابة غير صحيحة. حاول مرة أخرى.',
+          description: data.message || 'الإجابة غير صحيحة.',
           variant: 'destructive',
         })
       }
@@ -212,13 +244,28 @@ export function ItemDetailDialog({
             <Badge className={categoryColor}>{categoryLabel}</Badge>
           </div>
 
-          {/* Reward Badge */}
+          {/* Reward Badge with Terms */}
           {item.reward && (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
-              <Gift className="h-5 w-5 text-green-600 shrink-0" />
-              <div>
-                <p className="text-xs text-green-600 dark:text-green-400 font-medium">مكافأة مقدمة</p>
-                <p className="text-base font-bold text-green-700 dark:text-green-300">{item.reward}</p>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
+                <Gift className="h-5 w-5 text-green-600 shrink-0" />
+                <div>
+                  <p className="text-xs text-green-600 dark:text-green-400 font-medium">مكافأة مقدمة</p>
+                  <p className="text-base font-bold text-green-700 dark:text-green-300">{item.reward}</p>
+                </div>
+              </div>
+              {/* Reward Terms & Conditions */}
+              <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 space-y-1.5">
+                <div className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
+                  <Scale className="h-3.5 w-3.5 shrink-0" />
+                  <p className="text-xs font-semibold">تنويه قانوني حول المكافآت</p>
+                </div>
+                <p className="text-[11px] text-amber-600 dark:text-amber-500 leading-relaxed">
+                  المكافأة المذكورة هي التزام أخلاقي من المالك، وليست التزاماً قانونياً ملزماً للمنصة.
+                  موقع <strong>مفقوداتي</strong> يتوسط فقط في التواصل بين الطرفين ولا يتحمل أي مسؤولية
+                  عن تنفيذ أو عدم تنفيذ المكافأة. أي تعاملات مالية تتم بين الطرفين هي مسؤوليتهما
+                  الشخصية بالكامل. المنصة غير مسؤولة عن أي نزاعات مالية قد تنشأ.
+                </p>
               </div>
             </div>
           )}
@@ -297,6 +344,8 @@ export function ItemDetailDialog({
                   <ShieldCheck className="h-5 w-5 text-green-600" />
                 ) : verifyState === 'failed' ? (
                   <ShieldX className="h-5 w-5 text-red-600" />
+                ) : verifyState === 'locked' ? (
+                  <Ban className="h-5 w-5 text-red-600" />
                 ) : (
                   <Shield className="h-5 w-5 text-amber-600" />
                 )}
@@ -307,39 +356,64 @@ export function ItemDetailDialog({
               <p className="text-xs text-muted-foreground">
                 يجب الإجابة على سؤال التحقق لعرض بيانات التواصل مع العاثر
               </p>
+
+              {/* Attempts counter */}
+              {verifyState !== 'locked' && (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <AlertTriangle className="h-3 w-3" />
+                  <span>
+                    متبقي {remainingAttempts} من {MAX_ATTEMPTS} محاولات
+                  </span>
+                </div>
+              )}
+
               <div className="p-3 rounded-lg bg-background border">
                 <p className="text-sm font-medium mb-1">السؤال:</p>
                 <p className="text-sm text-primary">{item.verificationQuestion}</p>
               </div>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="اكتب إجابتك هنا..."
-                  value={verifyAnswer}
-                  onChange={(e) => {
-                    setVerifyAnswer(e.target.value)
-                    if (verifyState === 'failed') setVerifyState('idle')
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleVerify()
-                  }}
-                  className={verifyState === 'failed' ? 'border-red-400' : ''}
-                />
-                <Button
-                  onClick={handleVerify}
-                  disabled={loading || !verifyAnswer.trim()}
-                  className="shrink-0"
-                >
-                  {loading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Shield className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-              {verifyState === 'failed' && (
+
+              {verifyState !== 'locked' ? (
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="اكتب إجابتك هنا..."
+                    value={verifyAnswer}
+                    onChange={(e) => {
+                      setVerifyAnswer(e.target.value)
+                      if (verifyState === 'failed') setVerifyState('idle')
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleVerify()
+                    }}
+                    className={verifyState === 'failed' ? 'border-red-400' : ''}
+                  />
+                  <Button
+                    onClick={handleVerify}
+                    disabled={loading || !verifyAnswer.trim()}
+                    className="shrink-0"
+                  >
+                    {loading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Shield className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              ) : (
+                <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800">
+                  <div className="flex items-center gap-2 text-red-700 dark:text-red-400">
+                    <Ban className="h-4 w-4 shrink-0" />
+                    <p className="text-sm font-semibold">تم حظر المحاولات</p>
+                  </div>
+                  <p className="text-xs text-red-600 dark:text-red-500 mt-1">
+                    {rateLimitMessage || 'تم تجاوز الحد الأقصى للمحاولات (3 محاولات). يرجى المحاولة بعد 15 دقيقة.'}
+                  </p>
+                </div>
+              )}
+
+              {verifyState === 'failed' && remainingAttempts > 0 && (
                 <p className="text-xs text-red-600 flex items-center gap-1">
                   <ShieldX className="h-3 w-3" />
-                  الإجابة غير صحيحة، حاول مرة أخرى
+                  الإجابة غير صحيحة. متبقي {remainingAttempts} محاولة{remainingAttempts === 1 ? ' واحدة' : ''}.
                 </p>
               )}
               {verifyState === 'success' && (

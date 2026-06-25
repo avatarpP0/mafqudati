@@ -1,5 +1,6 @@
 import { db } from '@/lib/db'
 import { NextRequest, NextResponse } from 'next/server'
+import { sanitizeLostItems, sanitizeLostItem } from '@/lib/security'
 
 export async function GET(request: NextRequest) {
   try {
@@ -31,7 +32,10 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' },
     })
 
-    return NextResponse.json(items)
+    // SECURITY: Strip verificationAnswer from all items before sending to frontend
+    const safeItems = sanitizeLostItems(items as unknown as Record<string, unknown>[])
+
+    return NextResponse.json(safeItems)
   } catch (error) {
     console.error('Error fetching items:', error)
     return NextResponse.json({ error: 'Failed to fetch items' }, { status: 500 })
@@ -61,6 +65,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
+    if (!verificationQuestion || !verificationAnswer) {
+      return NextResponse.json({ error: 'Verification question and answer are required' }, { status: 400 })
+    }
+
     const item = await db.lostItem.create({
       data: {
         title,
@@ -72,15 +80,18 @@ export async function POST(request: NextRequest) {
         contactName,
         contactPhone,
         status: 'found',
-        verificationQuestion: verificationQuestion || null,
-        verificationAnswer: verificationAnswer || null,
+        verificationQuestion,
+        verificationAnswer,
         reward: reward || null,
         latitude: latitude != null && latitude !== '' ? parseFloat(latitude) : null,
         longitude: longitude != null && longitude !== '' ? parseFloat(longitude) : null,
       },
     })
 
-    return NextResponse.json(item, { status: 201 })
+    // SECURITY: Strip verificationAnswer from response
+    const safeItem = sanitizeLostItem(item as unknown as Record<string, unknown>)
+
+    return NextResponse.json(safeItem, { status: 201 })
   } catch (error) {
     console.error('Error creating item:', error)
     return NextResponse.json({ error: 'Failed to create item' }, { status: 500 })

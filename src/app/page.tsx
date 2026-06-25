@@ -412,7 +412,7 @@ export default function HomePage() {
                           )}
 
                           {/* Verification Badge */}
-                          {item.verificationQuestion && (
+                          {item.hasVerification && (
                             <div className="absolute bottom-3 left-3">
                               <Badge className="bg-blue-500/90 text-white backdrop-blur-sm gap-1 text-[10px]">
                                 <Shield className="h-3 w-3" />

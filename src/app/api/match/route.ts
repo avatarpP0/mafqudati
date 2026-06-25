@@ -117,6 +117,8 @@ Return ONLY a JSON array of matches sorted by matchScore (highest first), max 5 
       .slice(0, 5)
 
     // Enrich matches with item data
+    // SECURITY: Do NOT include verificationAnswer or contact details
+    // Contact info requires verification first
     const enrichedMatches = await Promise.all(
       validMatches.map(async (match) => {
         const item = await db.lostItem.findUnique({
@@ -133,8 +135,10 @@ Return ONLY a JSON array of matches sorted by matchScore (highest first), max 5 
                 location: item.location,
                 dateFound: item.dateFound,
                 imageUrl: item.imageUrl,
-                contactName: item.contactName,
-                contactPhone: item.contactPhone,
+                // SECURITY: Contact info hidden until verification
+                // User must click through to item detail & verify ownership
+                hasVerification: !!item.verificationAnswer,
+                verificationQuestion: item.verificationQuestion,
                 reward: item.reward,
               }
             : null,

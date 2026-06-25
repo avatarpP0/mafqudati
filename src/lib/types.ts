@@ -1,3 +1,4 @@
+// Safe LostItem type for the frontend - NEVER includes verificationAnswer
 export interface LostItem {
   id: string
   title: string
@@ -10,7 +11,7 @@ export interface LostItem {
   contactPhone: string
   status: 'found' | 'claimed'
   verificationQuestion: string | null
-  verificationAnswer: string | null
+  hasVerification: boolean
   reward: string | null
   latitude: number | null
   longitude: number | null
