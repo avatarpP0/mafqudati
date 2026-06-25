@@ -23,6 +23,7 @@ import { Plus, Loader2, Shield, Gift, MapPin } from 'lucide-react'
 import { CATEGORIES } from '@/lib/types'
 import { useToast } from '@/hooks/use-toast'
 import { MapPicker } from '@/components/lost-found/map-picker'
+import { useI18n } from '@/lib/i18n'
 
 interface PostItemDialogProps {
   onItemAdded: () => void
@@ -32,6 +33,7 @@ export function PostItemDialog({ onItemAdded }: PostItemDialogProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
+  const { t, dir } = useI18n()
 
   const [form, setForm] = useState({
     title: '',
@@ -61,12 +63,12 @@ export function PostItemDialog({ onItemAdded }: PostItemDialogProps) {
       })
 
       if (!res.ok) {
-        throw new Error('فشل في إضافة الشيء')
+        throw new Error('Failed to add item')
       }
 
       toast({
-        title: 'تم بنجاح',
-        description: 'تم نشر الشيء المفقود بنجاح',
+        title: t('toastPublished'),
+        description: t('toastPublishedDesc'),
       })
 
       setForm({
@@ -89,8 +91,8 @@ export function PostItemDialog({ onItemAdded }: PostItemDialogProps) {
       onItemAdded()
     } catch {
       toast({
-        title: 'خطأ',
-        description: 'حدث خطأ أثناء نشر الشيء المفقود',
+        title: t('toastPublished'),
+        description: t('toastPublishError'),
         variant: 'destructive',
       })
     } finally {
@@ -111,21 +113,21 @@ export function PostItemDialog({ onItemAdded }: PostItemDialogProps) {
       <DialogTrigger asChild>
         <Button size="lg" className="gap-2 text-base font-semibold shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all">
           <Plus className="h-5 w-5" />
-          أبلغ عن شيء موجود
+          {t('btnReportFound')}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" dir="rtl">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" dir={dir}>
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-right">
-            أبلغ عن شيء وجدته
+            {t('postFoundTitle')}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="title">عنوان الشيء *</Label>
+            <Label htmlFor="title">{t('labelTitle')}</Label>
             <Input
               id="title"
-              placeholder="مثال: هاتف آيفون أسود"
+              placeholder={t('phTitle')}
               value={form.title}
               onChange={(e) => updateForm('title', e.target.value)}
               required
@@ -133,10 +135,10 @@ export function PostItemDialog({ onItemAdded }: PostItemDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">الوصف *</Label>
+            <Label htmlFor="description">{t('labelDescription')}</Label>
             <Textarea
               id="description"
-              placeholder="صف الشيء الذي وجدته بالتفصيل..."
+              placeholder={t('phDescription')}
               value={form.description}
               onChange={(e) => updateForm('description', e.target.value)}
               rows={3}
@@ -145,19 +147,19 @@ export function PostItemDialog({ onItemAdded }: PostItemDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="category">التصنيف *</Label>
+            <Label htmlFor="category">{t('labelCategory')}</Label>
             <Select
               value={form.category}
               onValueChange={(value) => updateForm('category', value)}
               required
             >
               <SelectTrigger>
-                <SelectValue placeholder="اختر التصنيف" />
+                <SelectValue placeholder={t('labelCategory')} />
               </SelectTrigger>
               <SelectContent>
                 {CATEGORIES.filter((c) => c.id !== 'all').map((cat) => (
                   <SelectItem key={cat.id} value={cat.id}>
-                    {cat.label}
+                    {t(cat.labelKey)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -165,10 +167,10 @@ export function PostItemDialog({ onItemAdded }: PostItemDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="location">مكان الوجود *</Label>
+            <Label htmlFor="location">{t('labelLocation')}</Label>
             <Input
               id="location"
-              placeholder="مثال: محطة المترو - الدقي"
+              placeholder={t('phLocation')}
               value={form.location}
               onChange={(e) => updateForm('location', e.target.value)}
               required
@@ -179,7 +181,7 @@ export function PostItemDialog({ onItemAdded }: PostItemDialogProps) {
           <div className="space-y-2">
             <Label className="flex items-center gap-1.5">
               <MapPin className="h-4 w-4 text-primary" />
-              تحديد الموقع على الخريطة (اختياري)
+              {t('labelMap')}
             </Label>
             <MapPicker
               latitude={form.latitude ? parseFloat(form.latitude) : null}
@@ -189,7 +191,7 @@ export function PostItemDialog({ onItemAdded }: PostItemDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="dateFound">تاريخ الوجود *</Label>
+            <Label htmlFor="dateFound">{t('labelDateFound')}</Label>
             <Input
               id="dateFound"
               type="date"
@@ -200,7 +202,7 @@ export function PostItemDialog({ onItemAdded }: PostItemDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="imageUrl">رابط الصورة (اختياري)</Label>
+            <Label htmlFor="imageUrl">{t('labelImageUrl')}</Label>
             <Input
               id="imageUrl"
               placeholder="https://example.com/image.jpg"
@@ -214,20 +216,20 @@ export function PostItemDialog({ onItemAdded }: PostItemDialogProps) {
           <div className="p-4 rounded-lg border-2 border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 space-y-3">
             <Label className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400 font-semibold">
               <Shield className="h-4 w-4" />
-              سؤال التحقق (لمنع الاحتيال) *
+              {t('labelVerification')}
             </Label>
             <p className="text-xs text-muted-foreground">
-              اطرح سؤالاً لا يعرف إجابته إلا المالك الحقيقي. لن تظهر بيانات التواصل إلا بعد الإجابة الصحيحة.
+              {t('verificationDesc')}
             </p>
             <div className="space-y-2">
               <Input
-                placeholder="مثال: ما هي العلامة المميزة في خلفية الهاتف؟"
+                placeholder={t('phVerificationQ')}
                 value={form.verificationQuestion}
                 onChange={(e) => updateForm('verificationQuestion', e.target.value)}
                 required
               />
               <Input
-                placeholder="الإجابة الصحيحة"
+                placeholder={t('phVerificationA')}
                 value={form.verificationAnswer}
                 onChange={(e) => updateForm('verificationAnswer', e.target.value)}
                 required
@@ -239,13 +241,13 @@ export function PostItemDialog({ onItemAdded }: PostItemDialogProps) {
           <div className="p-4 rounded-lg border-2 border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/20 space-y-3">
             <Label className="flex items-center gap-1.5 text-green-700 dark:text-green-400 font-semibold">
               <Gift className="h-4 w-4" />
-              مكافأة مالية (اختياري)
+              {t('labelReward')}
             </Label>
             <p className="text-xs text-muted-foreground">
-              يمكنك رصد مكافأة تشجيعية لمن يعثر على الشيء
+              {t('rewardDesc')}
             </p>
             <Input
-              placeholder="مثال: 200 جنيه"
+              placeholder={t('phReward')}
               value={form.reward}
               onChange={(e) => updateForm('reward', e.target.value)}
             />
@@ -253,20 +255,20 @@ export function PostItemDialog({ onItemAdded }: PostItemDialogProps) {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="contactName">اسمك *</Label>
+              <Label htmlFor="contactName">{t('labelContactName')}</Label>
               <Input
                 id="contactName"
-                placeholder="اسمك الكامل"
+                placeholder={t('phContactName')}
                 value={form.contactName}
                 onChange={(e) => updateForm('contactName', e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="contactPhone">رقم الهاتف *</Label>
+              <Label htmlFor="contactPhone">{t('labelContactPhone')}</Label>
               <Input
                 id="contactPhone"
-                placeholder="01xxxxxxxxx"
+                placeholder={t('phContactPhone')}
                 value={form.contactPhone}
                 onChange={(e) => updateForm('contactPhone', e.target.value)}
                 dir="ltr"
@@ -279,10 +281,10 @@ export function PostItemDialog({ onItemAdded }: PostItemDialogProps) {
             {loading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin ml-2" />
-                جاري النشر...
+                {t('btnPublishing')}
               </>
             ) : (
-              'نشر البلاغ'
+              t('btnPublish')
             )}
           </Button>
         </form>

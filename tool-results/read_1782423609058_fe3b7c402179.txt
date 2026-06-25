@@ -1,0 +1,602 @@
+     1→'use client'
+     2→
+     3→import { useEffect, useState, useCallback } from 'react'
+     4→import { motion, AnimatePresence } from 'framer-motion'
+     5→import { Input } from '@/components/ui/input'
+     6→import { Button } from '@/components/ui/button'
+     7→import { Badge } from '@/components/ui/badge'
+     8→import { Card, CardContent } from '@/components/ui/card'
+     9→import { Skeleton } from '@/components/ui/skeleton'
+    10→import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+    11→import {
+    12→  Search,
+    13→  MapPin,
+    14→  Calendar,
+    15→  Eye,
+    16→  Package,
+    17→  Smartphone,
+    18→  FileText,
+    19→  Key,
+    20→  Shirt,
+    21→  Watch,
+    22→  Briefcase,
+    23→  Wallet,
+    24→  LayoutGrid,
+    25→  CheckCircle2,
+    26→  Clock,
+    27→  ArrowUp,
+    28→  Gift,
+    29→  AlertCircle,
+    30→  Sparkles,
+    31→  Shield,
+    32→} from 'lucide-react'
+    33→import { LostItem, LostReport, CATEGORIES, CATEGORY_COLORS, CATEGORY_GRADIENTS } from '@/lib/types'
+    34→import { PostItemDialog } from '@/components/lost-found/post-item-dialog'
+    35→import { PostLostReportDialog } from '@/components/lost-found/post-lost-report-dialog'
+    36→import { ItemDetailDialog } from '@/components/lost-found/item-detail-dialog'
+    37→import { AIMatchResults } from '@/components/lost-found/ai-match-results'
+    38→import { format } from 'date-fns'
+    39→import { ar } from 'date-fns/locale'
+    40→
+    41→const CATEGORY_ICONS: Record<string, React.ReactNode> = {
+    42→  all: <LayoutGrid className="h-4 w-4" />,
+    43→  electronics: <Smartphone className="h-4 w-4" />,
+    44→  documents: <FileText className="h-4 w-4" />,
+    45→  keys: <Key className="h-4 w-4" />,
+    46→  clothing: <Shirt className="h-4 w-4" />,
+    47→  accessories: <Watch className="h-4 w-4" />,
+    48→  bags: <Briefcase className="h-4 w-4" />,
+    49→  wallets: <Wallet className="h-4 w-4" />,
+    50→  other: <Package className="h-4 w-4" />,
+    51→}
+    52→
+    53→export default function HomePage() {
+    54→  const [items, setItems] = useState<LostItem[]>([])
+    55→  const [lostReports, setLostReports] = useState<LostReport[]>([])
+    56→  const [loading, setLoading] = useState(true)
+    57→  const [search, setSearch] = useState('')
+    58→  const [selectedCategory, setSelectedCategory] = useState('all')
+    59→  const [selectedItem, setSelectedItem] = useState<LostItem | null>(null)
+    60→  const [detailOpen, setDetailOpen] = useState(false)
+    61→  const [showScrollTop, setShowScrollTop] = useState(false)
+    62→  const [activeTab, setActiveTab] = useState('found')
+    63→
+    64→  const fetchItems = useCallback(async () => {
+    65→    try {
+    66→      setLoading(true)
+    67→      const params = new URLSearchParams()
+    68→      if (selectedCategory !== 'all') params.set('category', selectedCategory)
+    69→      if (search) params.set('search', search)
+    70→
+    71→      const res = await fetch(`/api/items?${params.toString()}`)
+    72→      if (res.ok) {
+    73→        const data = await res.json()
+    74→        setItems(data)
+    75→      }
+    76→    } catch (error) {
+    77→      console.error('Error fetching items:', error)
+    78→    } finally {
+    79→      setLoading(false)
+    80→    }
+    81→  }, [selectedCategory, search])
+    82→
+    83→  const fetchLostReports = useCallback(async () => {
+    84→    try {
+    85→      const params = new URLSearchParams()
+    86→      if (selectedCategory !== 'all') params.set('category', selectedCategory)
+    87→      if (search) params.set('search', search)
+    88→
+    89→      const res = await fetch(`/api/lost-reports?${params.toString()}`)
+    90→      if (res.ok) {
+    91→        const data = await res.json()
+    92→        setLostReports(data)
+    93→      }
+    94→    } catch (error) {
+    95→      console.error('Error fetching lost reports:', error)
+    96→    }
+    97→  }, [selectedCategory, search])
+    98→
+    99→  useEffect(() => {
+   100→    fetchItems()
+   101→    fetchLostReports()
+   102→  }, [fetchItems, fetchLostReports])
+   103→
+   104→  useEffect(() => {
+   105→    const handleScroll = () => {
+   106→      setShowScrollTop(window.scrollY > 400)
+   107→    }
+   108→    window.addEventListener('scroll', handleScroll)
+   109→    return () => window.removeEventListener('scroll', handleScroll)
+   110→  }, [])
+   111→
+   112→  const scrollToTop = () => {
+   113→    window.scrollTo({ top: 0, behavior: 'smooth' })
+   114→  }
+   115→
+   116→  const handleItemClick = (item: LostItem) => {
+   117→    setSelectedItem(item)
+   118→    setDetailOpen(true)
+   119→  }
+   120→
+   121→  const handleMatchClick = (itemId: string) => {
+   122→    const item = items.find((i) => i.id === itemId)
+   123→    if (item) {
+   124→      setSelectedItem(item)
+   125→      setDetailOpen(true)
+   126→    }
+   127→  }
+   128→
+   129→  const formatDate = (dateStr: string) => {
+   130→    try {
+   131→      return format(new Date(dateStr), 'd MMMM yyyy', { locale: ar })
+   132→    } catch {
+   133→      return dateStr
+   134→    }
+   135→  }
+   136→
+   137→  const foundCount = items.filter((i) => i.status === 'found').length
+   138→  const claimedCount = items.filter((i) => i.status === 'claimed').length
+   139→
+   140→  return (
+   141→    <div className="min-h-screen flex flex-col bg-background" dir="rtl">
+   142→      {/* Header */}
+   143→      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b">
+   144→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   145→          <div className="flex items-center justify-between h-16">
+   146→            <div className="flex items-center gap-3">
+   147→              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
+   148→                <Search className="h-5 w-5 text-white" />
+   149→              </div>
+   150→              <div>
+   151→                <h1 className="text-xl font-bold bg-gradient-to-l from-amber-600 to-orange-600 bg-clip-text text-transparent">
+   152→                  مفقوداتي
+   153→                </h1>
+   154→                <p className="text-[10px] text-muted-foreground -mt-1">
+   155→                  اعثر على أشيائك المفقودة
+   156→                </p>
+   157→              </div>
+   158→            </div>
+   159→
+   160→            <div className="hidden sm:flex items-center gap-2">
+   161→              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/30">
+   162→                <Clock className="h-3.5 w-3.5 text-amber-600" />
+   163→                <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">
+   164→                  {foundCount} متاح
+   165→                </span>
+   166→              </div>
+   167→              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-50 dark:bg-green-950/30">
+   168→                <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+   169→                <span className="text-xs font-semibold text-green-700 dark:text-green-400">
+   170→                  {claimedCount} تم الاسترجاع
+   171→                </span>
+   172→              </div>
+   173→            </div>
+   174→
+   175→            <div className="flex items-center gap-2">
+   176→              <PostLostReportDialog onReportAdded={fetchLostReports} />
+   177→              <PostItemDialog onItemAdded={fetchItems} />
+   178→            </div>
+   179→          </div>
+   180→        </div>
+   181→      </header>
+   182→
+   183→      {/* Hero Section */}
+   184→      <section className="relative overflow-hidden bg-gradient-to-bl from-amber-50 via-orange-50 to-rose-50 dark:from-amber-950/20 dark:via-orange-950/20 dark:to-rose-950/20 border-b">
+   185→        <div className="absolute inset-0 opacity-10">
+   186→          <div className="absolute top-10 right-10 w-72 h-72 bg-amber-400 rounded-full blur-3xl" />
+   187→          <div className="absolute bottom-10 left-10 w-96 h-96 bg-orange-400 rounded-full blur-3xl" />
+   188→        </div>
+   189→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 relative">
+   190→          <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
+   191→            <div className="flex-1 text-center lg:text-right">
+   192→              <motion.div
+   193→                initial={{ opacity: 0, y: 20 }}
+   194→                animate={{ opacity: 1, y: 0 }}
+   195→                transition={{ duration: 0.5 }}
+   196→              >
+   197→                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-tight">
+   198→                  اعثر على{' '}
+   199→                  <span className="bg-gradient-to-l from-amber-600 to-orange-600 bg-clip-text text-transparent">
+   200→                    أشيائك المفقودة
+   201→                  </span>
+   202→                </h2>
+   203→                <p className="mt-4 text-lg text-muted-foreground max-w-lg mx-auto lg:mx-0">
+   204→                  مجتمع يساعد بعضه البعض لاستعادة الأشياء المفقودة. انشر الأشياء
+   205→                  التي وجدتها ليعثر عليها أصحابها.
+   206→                </p>
+   207→              </motion.div>
+   208→
+   209→              {/* Search Bar */}
+   210→              <motion.div
+   211→                initial={{ opacity: 0, y: 20 }}
+   212→                animate={{ opacity: 1, y: 0 }}
+   213→                transition={{ duration: 0.5, delay: 0.1 }}
+   214→                className="mt-6 max-w-xl mx-auto lg:mx-0"
+   215→              >
+   216→                <div className="relative">
+   217→                  <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+   218→                  <Input
+   219→                    placeholder="ابحث عن شيء مفقود..."
+   220→                    value={search}
+   221→                    onChange={(e) => setSearch(e.target.value)}
+   222→                    className="pr-12 pl-4 h-12 text-base rounded-xl border-2 border-amber-200 dark:border-amber-800 focus:border-amber-400 dark:focus:border-amber-600 shadow-lg"
+   223→                  />
+   224→                </div>
+   225→              </motion.div>
+   226→
+   227→              {/* Feature Pills */}
+   228→              <motion.div
+   229→                initial={{ opacity: 0, y: 10 }}
+   230→                animate={{ opacity: 1, y: 0 }}
+   231→                transition={{ duration: 0.5, delay: 0.2 }}
+   232→                className="mt-4 flex flex-wrap items-center justify-center lg:justify-start gap-2"
+   233→              >
+   234→                <Badge variant="outline" className="gap-1 text-xs bg-background/80">
+   235→                  <Shield className="h-3 w-3 text-amber-600" />
+   236→                  تحقق من الملكية
+   237→                </Badge>
+   238→                <Badge variant="outline" className="gap-1 text-xs bg-background/80">
+   239→                  <Sparkles className="h-3 w-3 text-purple-600" />
+   240→                  مطابقة ذكية بالذكاء الاصطناعي
+   241→                </Badge>
+   242→                <Badge variant="outline" className="gap-1 text-xs bg-background/80">
+   243→                  <MapPin className="h-3 w-3 text-blue-600" />
+   244→                  تحديد الموقع الجغرافي
+   245→                </Badge>
+   246→                <Badge variant="outline" className="gap-1 text-xs bg-background/80">
+   247→                  <Gift className="h-3 w-3 text-green-600" />
+   248→                  نظام المكافآت
+   249→                </Badge>
+   250→              </motion.div>
+   251→            </div>
+   252→
+   253→            {/* Hero Image */}
+   254→            <motion.div
+   255→              initial={{ opacity: 0, scale: 0.9 }}
+   256→              animate={{ opacity: 1, scale: 1 }}
+   257→              transition={{ duration: 0.6, delay: 0.2 }}
+   258→              className="flex-1 max-w-md w-full"
+   259→            >
+   260→              <div className="rounded-2xl overflow-hidden shadow-2xl shadow-amber-500/10 border-2 border-amber-200/50 dark:border-amber-800/50">
+   261→                <img
+   262→                  src="/hero-image.png"
+   263→                  alt="مفقوداتي - اعثر على أشيائك المفقودة"
+   264→                  className="w-full h-auto object-cover"
+   265→                />
+   266→              </div>
+   267→            </motion.div>
+   268→          </div>
+   269→        </div>
+   270→      </section>
+   271→
+   272→      {/* Main Content */}
+   273→      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+   274→        {/* Tabs */}
+   275→        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+   276→          <div className="flex items-center justify-between mb-6">
+   277→            <TabsList className="h-11">
+   278→              <TabsTrigger value="found" className="gap-1.5 px-4 text-sm">
+   279→                <Search className="h-4 w-4" />
+   280→                أشياء موجودة
+   281→              </TabsTrigger>
+   282→              <TabsTrigger value="lost" className="gap-1.5 px-4 text-sm">
+   283→                <AlertCircle className="h-4 w-4" />
+   284→                بلاغات الفقدان
+   285→              </TabsTrigger>
+   286→            </TabsList>
+   287→          </div>
+   288→
+   289→          {/* Category Filter */}
+   290→          <div className="mb-6">
+   291→            <div className="flex flex-wrap gap-2">
+   292→              {CATEGORIES.map((cat) => (
+   293→                <Button
+   294→                  key={cat.id}
+   295→                  variant={selectedCategory === cat.id ? 'default' : 'outline'}
+   296→                  size="sm"
+   297→                  className={`gap-1.5 rounded-full transition-all ${
+   298→                    selectedCategory === cat.id
+   299→                      ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-md shadow-amber-500/20'
+   300→                      : 'hover:bg-amber-50 dark:hover:bg-amber-950/30 hover:border-amber-300 dark:hover:border-amber-700'
+   301→                  }`}
+   302→                  onClick={() => setSelectedCategory(cat.id)}
+   303→                >
+   304→                  {CATEGORY_ICONS[cat.id]}
+   305→                  {cat.label}
+   306→                </Button>
+   307→              ))}
+   308→            </div>
+   309→          </div>
+   310→
+   311→          {/* Found Items Tab */}
+   312→          <TabsContent value="found">
+   313→            {loading ? (
+   314→              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+   315→                {Array.from({ length: 6 }).map((_, i) => (
+   316→                  <Card key={i} className="overflow-hidden">
+   317→                    <Skeleton className="h-40 w-full" />
+   318→                    <CardContent className="p-4 space-y-3">
+   319→                      <Skeleton className="h-5 w-3/4" />
+   320→                      <Skeleton className="h-4 w-1/2" />
+   321→                      <Skeleton className="h-4 w-2/3" />
+   322→                    </CardContent>
+   323→                  </Card>
+   324→                ))}
+   325→              </div>
+   326→            ) : items.length === 0 ? (
+   327→              <motion.div
+   328→                initial={{ opacity: 0, y: 20 }}
+   329→                animate={{ opacity: 1, y: 0 }}
+   330→                className="text-center py-16"
+   331→              >
+   332→                <div className="mx-auto w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
+   333→                  <Package className="h-10 w-10 text-muted-foreground" />
+   334→                </div>
+   335→                <h3 className="text-xl font-semibold mb-2">لا توجد أشياء حالياً</h3>
+   336→                <p className="text-muted-foreground max-w-md mx-auto">
+   337→                  {search || selectedCategory !== 'all'
+   338→                    ? 'لم يتم العثور على نتائج مطابقة. جرب تغيير معايير البحث.'
+   339→                    : 'كن أول من ينشر شيئاً وجده! ساعد الآخرين في استعادة أشيائهم المفقودة.'}
+   340→                </p>
+   341→              </motion.div>
+   342→            ) : (
+   343→              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+   344→                <AnimatePresence mode="popLayout">
+   345→                  {items.map((item, index) => (
+   346→                    <motion.div
+   347→                      key={item.id}
+   348→                      layout
+   349→                      initial={{ opacity: 0, y: 20 }}
+   350→                      animate={{ opacity: 1, y: 0 }}
+   351→                      exit={{ opacity: 0, scale: 0.9 }}
+   352→                      transition={{ duration: 0.3, delay: index * 0.05 }}
+   353→                    >
+   354→                      <Card
+   355→                        className="overflow-hidden cursor-pointer group hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+   356→                        onClick={() => handleItemClick(item)}
+   357→                      >
+   358→                        {/* Card Image / Gradient Placeholder */}
+   359→                        <div className="relative h-40 overflow-hidden">
+   360→                          {item.imageUrl ? (
+   361→                            <img
+   362→                              src={item.imageUrl}
+   363→                              alt={item.title}
+   364→                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+   365→                            />
+   366→                          ) : (
+   367→                            <div
+   368→                              className={`w-full h-full bg-gradient-to-br ${
+   369→                                CATEGORY_GRADIENTS[item.category] ||
+   370→                                CATEGORY_GRADIENTS.other
+   371→                              } flex items-center justify-center`}
+   372→                            >
+   373→                              <div className="text-white/80">
+   374→                                {CATEGORY_ICONS[item.category] || (
+   375→                                  <Package className="h-12 w-12" />
+   376→                                )}
+   377→                              </div>
+   378→                            </div>
+   379→                          )}
+   380→
+   381→                          {/* Status Badge */}
+   382→                          <div className="absolute top-3 right-3">
+   383→                            <Badge
+   384→                              className={
+   385→                                item.status === 'claimed'
+   386→                                  ? 'bg-green-500/90 text-white backdrop-blur-sm'
+   387→                                  : 'bg-amber-500/90 text-white backdrop-blur-sm'
+   388→                              }
+   389→                            >
+   390→                              {item.status === 'claimed' ? (
+   391→                                <>
+   392→                                  <CheckCircle2 className="h-3 w-3 ml-1" />
+   393→                                  تم الاسترجاع
+   394→                                </>
+   395→                              ) : (
+   396→                                <>
+   397→                                  <Clock className="h-3 w-3 ml-1" />
+   398→                                  متاح
+   399→                                </>
+   400→                              )}
+   401→                            </Badge>
+   402→                          </div>
+   403→
+   404→                          {/* Reward Badge */}
+   405→                          {item.reward && (
+   406→                            <div className="absolute top-3 left-3">
+   407→                              <Badge className="bg-green-500/90 text-white backdrop-blur-sm gap-1">
+   408→                                <Gift className="h-3 w-3" />
+   409→                                {item.reward}
+   410→                              </Badge>
+   411→                            </div>
+   412→                          )}
+   413→
+   414→                          {/* Verification Badge */}
+   415→                          {item.hasVerification && (
+   416→                            <div className="absolute bottom-3 left-3">
+   417→                              <Badge className="bg-blue-500/90 text-white backdrop-blur-sm gap-1 text-[10px]">
+   418→                                <Shield className="h-3 w-3" />
+   419→                                تحقق
+   420→                              </Badge>
+   421→                            </div>
+   422→                          )}
+   423→
+   424→                          {/* Category Badge */}
+   425→                          <div className="absolute bottom-3 right-3">
+   426→                            <Badge
+   427→                              className={`${CATEGORY_COLORS[item.category] || CATEGORY_COLORS.other} text-xs`}
+   428→                            >
+   429→                              {CATEGORIES.find((c) => c.id === item.category)
+   430→                                ?.label || item.category}
+   431→                            </Badge>
+   432→                          </div>
+   433→                        </div>
+   434→
+   435→                        <CardContent className="p-4">
+   436→                          <h3 className="font-bold text-base mb-2 line-clamp-1 group-hover:text-primary transition-colors">
+   437→                            {item.title}
+   438→                          </h3>
+   439→
+   440→                          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+   441→                            {item.description}
+   442→                          </p>
+   443→
+   444→                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+   445→                            <div className="flex items-center gap-1">
+   446→                              <MapPin className="h-3 w-3" />
+   447→                              <span className="line-clamp-1 max-w-[120px]">
+   448→                                {item.location}
+   449→                              </span>
+   450→                            </div>
+   451→                            <div className="flex items-center gap-1">
+   452→                              <Calendar className="h-3 w-3" />
+   453→                              <span>{formatDate(item.dateFound)}</span>
+   454→                            </div>
+   455→                          </div>
+   456→
+   457→                          <div className="mt-3 flex items-center justify-between">
+   458→                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+   459→                              <Eye className="h-3.5 w-3.5" />
+   460→                              <span>عرض التفاصيل</span>
+   461→                            </div>
+   462→                          </div>
+   463→                        </CardContent>
+   464→                      </Card>
+   465→                    </motion.div>
+   466→                  ))}
+   467→                </AnimatePresence>
+   468→              </div>
+   469→            )}
+   470→          </TabsContent>
+   471→
+   472→          {/* Lost Reports Tab */}
+   473→          <TabsContent value="lost">
+   474→            {lostReports.length === 0 ? (
+   475→              <motion.div
+   476→                initial={{ opacity: 0, y: 20 }}
+   477→                animate={{ opacity: 1, y: 0 }}
+   478→                className="text-center py-16"
+   479→              >
+   480→                <div className="mx-auto w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
+   481→                  <AlertCircle className="h-10 w-10 text-muted-foreground" />
+   482→                </div>
+   483→                <h3 className="text-xl font-semibold mb-2">لا توجد بلاغات فقدان</h3>
+   484→                <p className="text-muted-foreground max-w-md mx-auto">
+   485→                  أبلغ عن شيء فقدته وسيساعدك الذكاء الاصطناعي في البحث عنه تلقائياً
+   486→                </p>
+   487→              </motion.div>
+   488→            ) : (
+   489→              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+   490→                <AnimatePresence mode="popLayout">
+   491→                  {lostReports.map((report, index) => (
+   492→                    <motion.div
+   493→                      key={report.id}
+   494→                      layout
+   495→                      initial={{ opacity: 0, y: 20 }}
+   496→                      animate={{ opacity: 1, y: 0 }}
+   497→                      exit={{ opacity: 0, scale: 0.9 }}
+   498→                      transition={{ duration: 0.3, delay: index * 0.05 }}
+   499→                    >
+   500→                      <Card className="overflow-hidden border-red-200 dark:border-red-800">
+   501→                        <div className="h-2 bg-gradient-to-l from-red-400 to-orange-400" />
+   502→                        <CardContent className="p-4 space-y-3">
+   503→                          <div className="flex items-start justify-between gap-2">
+   504→                            <h3 className="font-bold text-base line-clamp-1">
+   505→                              {report.title}
+   506→                            </h3>
+   507→                            <Badge
+   508→                              className={
+   509→                                report.status === 'found'
+   510→                                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 shrink-0'
+   511→                                  : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300 shrink-0'
+   512→                              }
+   513→                            >
+   514→                              {report.status === 'found' ? 'تم العثور' : 'مفقود'}
+   515→                            </Badge>
+   516→                          </div>
+   517→
+   518→                          <Badge className={`${CATEGORY_COLORS[report.category] || CATEGORY_COLORS.other} text-xs`}>
+   519→                            {CATEGORIES.find((c) => c.id === report.category)?.label || report.category}
+   520→                          </Badge>
+   521→
+   522→                          <p className="text-sm text-muted-foreground line-clamp-2">
+   523→                            {report.description}
+   524→                          </p>
+   525→
+   526→                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+   527→                            <div className="flex items-center gap-1">
+   528→                              <MapPin className="h-3 w-3" />
+   529→                              <span className="line-clamp-1 max-w-[100px]">{report.location}</span>
+   530→                            </div>
+   531→                            <div className="flex items-center gap-1">
+   532→                              <Calendar className="h-3 w-3" />
+   533→                              <span>{formatDate(report.dateLost)}</span>
+   534→                            </div>
+   535→                          </div>
+   536→
+   537→                          {report.reward && (
+   538→                            <div className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
+   539→                              <Gift className="h-3.5 w-3.5" />
+   540→                              <span className="font-semibold">مكافأة: {report.reward}</span>
+   541→                            </div>
+   542→                          )}
+   543→
+   544→                          {/* AI Match Button */}
+   545→                          <AIMatchResults
+   546→                            report={report}
+   547→                            onMatchClick={handleMatchClick}
+   548→                          />
+   549→                        </CardContent>
+   550→                      </Card>
+   551→                    </motion.div>
+   552→                  ))}
+   553→                </AnimatePresence>
+   554→              </div>
+   555→            )}
+   556→          </TabsContent>
+   557→        </Tabs>
+   558→      </main>
+   559→
+   560→      {/* Item Detail Dialog */}
+   561→      <ItemDetailDialog
+   562→        item={selectedItem}
+   563→        open={detailOpen}
+   564→        onOpenChange={setDetailOpen}
+   565→        onItemClaimed={fetchItems}
+   566→      />
+   567→
+   568→      {/* Scroll to Top */}
+   569→      <AnimatePresence>
+   570→        {showScrollTop && (
+   571→          <motion.button
+   572→            initial={{ opacity: 0, scale: 0.8 }}
+   573→            animate={{ opacity: 1, scale: 1 }}
+   574→            exit={{ opacity: 0, scale: 0.8 }}
+   575→            onClick={scrollToTop}
+   576→            className="fixed bottom-6 left-6 z-50 h-12 w-12 rounded-full bg-amber-600 hover:bg-amber-700 text-white shadow-lg shadow-amber-500/30 flex items-center justify-center transition-colors"
+   577→          >
+   578→            <ArrowUp className="h-5 w-5" />
+   579→          </motion.button>
+   580→        )}
+   581→      </AnimatePresence>
+   582→
+   583→      {/* Footer */}
+   584→      <footer className="bg-muted/50 border-t mt-auto">
+   585→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+   586→          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+   587→            <div className="flex items-center gap-2">
+   588→              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+   589→                <Search className="h-4 w-4 text-white" />
+   590→              </div>
+   591→              <span className="font-bold text-sm">مفقوداتي</span>
+   592→            </div>
+   593→            <p className="text-sm text-muted-foreground text-center">
+   594→              مجتمع يساعد بعضه البعض لاستعادة الأشياء المفقودة © {new Date().getFullYear()}
+   595→            </p>
+   596→          </div>
+   597→        </div>
+   598→      </footer>
+   599→    </div>
+   600→  )
+   601→}
+   602→

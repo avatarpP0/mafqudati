@@ -43,16 +43,17 @@ export interface MatchResult {
   reason: string
 }
 
+// Category IDs only - labels come from i18n translations
 export const CATEGORIES = [
-  { id: 'all', label: 'الكل', icon: 'LayoutGrid' },
-  { id: 'electronics', label: 'إلكترونيات', icon: 'Smartphone' },
-  { id: 'documents', label: 'مستندات', icon: 'FileText' },
-  { id: 'keys', label: 'مفاتيح', icon: 'Key' },
-  { id: 'clothing', label: 'ملابس', icon: 'Shirt' },
-  { id: 'accessories', label: 'إكسسوارات', icon: 'Watch' },
-  { id: 'bags', label: 'حقائب', icon: 'Briefcase' },
-  { id: 'wallets', label: 'محافظ', icon: 'Wallet' },
-  { id: 'other', label: 'أخرى', icon: 'Package' },
+  { id: 'all', labelKey: 'catAll', icon: 'LayoutGrid' },
+  { id: 'electronics', labelKey: 'catElectronics', icon: 'Smartphone' },
+  { id: 'documents', labelKey: 'catDocuments', icon: 'FileText' },
+  { id: 'keys', labelKey: 'catKeys', icon: 'Key' },
+  { id: 'clothing', labelKey: 'catClothing', icon: 'Shirt' },
+  { id: 'accessories', labelKey: 'catAccessories', icon: 'Watch' },
+  { id: 'bags', labelKey: 'catBags', icon: 'Briefcase' },
+  { id: 'wallets', labelKey: 'catWallets', icon: 'Wallet' },
+  { id: 'other', labelKey: 'catOther', icon: 'Package' },
 ] as const
 
 export const CATEGORY_COLORS: Record<string, string> = {

@@ -19,6 +19,7 @@ import { LostReport, CATEGORIES, CATEGORY_COLORS } from '@/lib/types'
 import { useToast } from '@/hooks/use-toast'
 import { format } from 'date-fns'
 import { ar } from 'date-fns/locale'
+import { useI18n } from '@/lib/i18n'
 
 interface MatchItem {
   lostItemId: string
@@ -49,12 +50,13 @@ export function AIMatchResults({ report, onMatchClick }: AIMatchResultsProps) {
   const [expanded, setExpanded] = useState(false)
   const [searched, setSearched] = useState(false)
   const { toast } = useToast()
+  const { t, locale } = useI18n()
 
   const searchMatches = async () => {
     setLoading(true)
     try {
       const res = await fetch(`/api/match?lostReportId=${report.id}`)
-      if (!res.ok) throw new Error('فشل في البحث')
+      if (!res.ok) throw new Error('Search failed')
 
       const data = await res.json()
       setMatches(data.matches || [])
@@ -63,19 +65,19 @@ export function AIMatchResults({ report, onMatchClick }: AIMatchResultsProps) {
 
       if (data.matches?.length > 0) {
         toast({
-          title: 'تم العثور على تطابقات!',
-          description: `وجدنا ${data.matches.length} تطابق محتمل`,
+          title: t('matchSuccessTitle'),
+          description: t('matchSuccessDesc', { count: data.matches.length }),
         })
       } else {
         toast({
-          title: 'لا توجد تطابقات حالياً',
-          description: 'سيتم إعلامك عند ظهور أشياء مطابقة',
+          title: t('matchNoResults'),
+          description: t('matchNoResultsDesc'),
         })
       }
     } catch {
       toast({
-        title: 'خطأ',
-        description: 'حدث خطأ أثناء البحث عن تطابقات',
+        title: t('toastPublished'),
+        description: t('matchError'),
         variant: 'destructive',
       })
     } finally {
@@ -85,7 +87,7 @@ export function AIMatchResults({ report, onMatchClick }: AIMatchResultsProps) {
 
   const formatDate = (dateStr: string) => {
     try {
-      return format(new Date(dateStr), 'd MMMM yyyy', { locale: ar })
+      return format(new Date(dateStr), 'd MMMM yyyy', { locale: locale === 'ar' ? ar : undefined })
     } catch {
       return dateStr
     }
@@ -98,9 +100,9 @@ export function AIMatchResults({ report, onMatchClick }: AIMatchResultsProps) {
   }
 
   const getScoreLabel = (score: number) => {
-    if (score >= 80) return 'تطابق عالي'
-    if (score >= 60) return 'تطابق متوسط'
-    return 'تطابق محتمل'
+    if (score >= 80) return t('matchHigh')
+    if (score >= 60) return t('matchMedium')
+    return t('matchPotentialLabel')
   }
 
   const getProgressColor = (score: number) => {
@@ -119,12 +121,12 @@ export function AIMatchResults({ report, onMatchClick }: AIMatchResultsProps) {
         {loading ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
-            جاري البحث بالذكاء الاصطناعي...
+            {t('btnSearchingAI')}
           </>
         ) : (
           <>
             <Sparkles className="h-4 w-4" />
-            بحث عن تطابقات بالذكاء الاصطناعي
+            {t('btnSearchAI')}
           </>
         )}
       </Button>
@@ -135,7 +137,7 @@ export function AIMatchResults({ report, onMatchClick }: AIMatchResultsProps) {
             onClick={() => setExpanded(!expanded)}
             className="flex items-center gap-2 text-sm font-medium text-purple-700 dark:text-purple-400 hover:underline"
           >
-            {matches.length} تطابق محتمل
+            {matches.length} {t('matchPotential')}
             {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </button>
 
@@ -151,12 +153,12 @@ export function AIMatchResults({ report, onMatchClick }: AIMatchResultsProps) {
                     <div className="flex items-start justify-between gap-3 mb-2">
                       <div className="flex-1 min-w-0">
                         <h4 className="font-bold text-sm truncate">
-                          {match.item?.title || 'شيء موجود'}
+                          {match.item?.title || t('statusFound')}
                         </h4>
                         <Badge
                           className={`${CATEGORY_COLORS[match.item?.category || 'other'] || CATEGORY_COLORS.other} text-xs mt-1`}
                         >
-                          {CATEGORIES.find((c) => c.id === match.item?.category)?.label || 'أخرى'}
+                          {t(CATEGORIES.find((c) => c.id === match.item?.category)?.labelKey || 'catOther')}
                         </Badge>
                       </div>
                       <div className="text-left shrink-0">
@@ -195,7 +197,7 @@ export function AIMatchResults({ report, onMatchClick }: AIMatchResultsProps) {
 
                     <div className="mt-2 flex items-center gap-1 text-xs text-primary">
                       <CheckCircle2 className="h-3 w-3" />
-                      <span>انقر لعرض التفاصيل والتحقق من الملكية</span>
+                      <span>{t('matchClickToVerify')}</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -207,7 +209,7 @@ export function AIMatchResults({ report, onMatchClick }: AIMatchResultsProps) {
 
       {searched && matches.length === 0 && (
         <p className="text-sm text-muted-foreground p-3 rounded-lg bg-muted/50">
-          لم يتم العثور على تطابقات حالياً. سيتم إعلامك عند ظهور أشياء مطابقة.
+          {t('matchNoResultsDesc')}
         </p>
       )}
     </div>

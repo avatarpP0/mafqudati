@@ -176,3 +176,92 @@ Stage Summary:
 - Security Fix 3 (Reward Terms): Legal disclaimer added to all reward displays ✅
 - All APIs verified: verificationAnswer absent from responses
 - Zero errors in console and lint
+
+---
+Task ID: 3-dialogs
+Agent: i18n-dialogs-agent
+Task: Update all dialog components to use the i18n translation system
+
+Work Log:
+- Read worklog.md and all 4 dialog component files
+- Read i18n system: provider.tsx, translations.ts, types.ts
+- Updated `post-item-dialog.tsx`:
+  - Added `const { t, dir } = useI18n()` with import
+  - Replaced all hardcoded Arabic strings with `t()` calls (labels, placeholders, button text, toast messages)
+  - Replaced `dir="rtl"` with `dir={dir}`
+  - Category labels now use `t(cat.labelKey)` instead of `cat.label`
+- Updated `item-detail-dialog.tsx`:
+  - Added `const { t, dir, locale } = useI18n()` with import
+  - Replaced all hardcoded Arabic strings with `t()` calls (section titles, labels, verification states, toasts, reward terms)
+  - Replaced `dir="rtl"` with `dir={dir}`
+  - Category label: `t(CATEGORIES.find((c) => c.id === item.category)?.labelKey || 'catOther')`
+  - Date formatting: `format(date, 'd MMMM yyyy', { locale: locale === 'ar' ? ar : undefined })`
+  - Verification attempts: `t('verifyAttemptsLeft', { count: remainingAttempts, max: MAX_ATTEMPTS })`
+  - Wrong answer message uses `t('verifyWrongAnswer', { count })` and `t('verifyWrongAnswerOne')` for singular
+- Updated `post-lost-report-dialog.tsx`:
+  - Added `const { t, dir } = useI18n()` with import
+  - Replaced all hardcoded Arabic strings with `t()` calls (labels, placeholders, button text, toast messages)
+  - Replaced `dir="rtl"` with `dir={dir}`
+  - Category labels now use `t(cat.labelKey)` instead of `cat.label`
+- Updated `ai-match-results.tsx`:
+  - Added `const { t, locale } = useI18n()` with import
+  - Replaced all hardcoded Arabic strings with `t()` calls (button text, toast messages, score labels, match labels)
+  - Category label: `t(CATEGORIES.find((c) => c.id === match.item?.category)?.labelKey || 'catOther')`
+  - Date formatting: `format(date, 'd MMMM yyyy', { locale: locale === 'ar' ? ar : undefined })`
+  - Empty state message uses `t('matchNoResultsDesc')`
+- Ran `bun run lint` — zero errors
+
+Stage Summary:
+- All 4 dialog components fully migrated to i18n translation system ✅
+- post-item-dialog.tsx: 15+ strings replaced with t() calls ✅
+- item-detail-dialog.tsx: 25+ strings replaced with t() calls, locale-aware date formatting ✅
+- post-lost-report-dialog.tsx: 12+ strings replaced with t() calls ✅
+- ai-match-results.tsx: 10+ strings replaced with t() calls, locale-aware date formatting ✅
+- All dir="rtl" replaced with dir={dir} for dynamic RTL/LTR ✅
+- All category labels use t(cat.labelKey) / t(CATEGORIES.find(...).labelKey) ✅
+- Zero lint errors
+
+---
+Task ID: 3-page
+Agent: i18n-updater
+Task: Update main page.tsx to use i18n translation system
+
+Work Log:
+- Read worklog.md and existing code to understand full context
+- Read `/src/lib/i18n/` module (provider.tsx, translations.ts, index.ts) and `/src/lib/types.ts` (CATEGORIES now uses labelKey)
+- Updated `/src/app/page.tsx` with full i18n integration:
+  - Added `import { useI18n } from '@/lib/i18n'` and `import { Globe } from 'lucide-react'`
+  - Added `const { t, dir, locale, setLocale } = useI18n()` at component top
+  - Replaced `dir="rtl"` with `dir={dir}` on root div
+  - Replaced ALL hardcoded Arabic text with `t('key')` calls (20+ replacements):
+    - App name, tagline, description
+    - Hero section titles
+    - Feature pills (verification, AI, map, reward)
+    - Stats badges (available, recovered)
+    - Tab labels (found items, lost reports)
+    - Category labels (cat.label → t(cat.labelKey))
+    - Status badges (available, claimed, found, lost)
+    - Empty states (no items, no reports, filtered)
+    - View details text
+    - Reward badge label
+    - Verification badge
+    - Footer text
+  - Updated `formatDate()` to use locale-aware formatting: `locale === 'ar' ? ar : undefined`
+  - Added Language Switcher button (Globe icon) in header between stats and action buttons
+  - Changed category label rendering: `cat.label` → `t(cat.labelKey)`
+  - Changed `CATEGORIES.find(...)?.label` → `t(CATEGORIES.find(...)?.labelKey || 'catOther')`
+  - Made directional CSS classes dynamic based on `dir` (search icon position, badge positions, scroll-to-top button)
+- Fixed lint error in `/src/lib/i18n/provider.tsx`:
+  - Replaced `useEffect` + `setState` pattern (react-hooks/set-state-in-effect) with lazy state initializer
+  - `useState<Locale>(getInitialLocale)` reads from localStorage on client, defaults to 'ar' on server
+- Ran `bun run lint` with zero errors
+- Verified dev server running without errors
+
+Stage Summary:
+- page.tsx fully internationalized: all hardcoded Arabic replaced with t() calls ✅
+- Language Switcher (Globe icon) added to header, toggles AR/EN ✅
+- Locale-aware date formatting (Arabic months vs English) ✅
+- Dynamic RTL/LTR layout with dir={dir} ✅
+- Category labels use t(cat.labelKey) from i18n translations ✅
+- Lint error in provider.tsx fixed (lazy state initializer) ✅
+- Zero lint errors

@@ -29,12 +29,14 @@ import {
   AlertCircle,
   Sparkles,
   Shield,
+  Globe,
 } from 'lucide-react'
 import { LostItem, LostReport, CATEGORIES, CATEGORY_COLORS, CATEGORY_GRADIENTS } from '@/lib/types'
 import { PostItemDialog } from '@/components/lost-found/post-item-dialog'
 import { PostLostReportDialog } from '@/components/lost-found/post-lost-report-dialog'
 import { ItemDetailDialog } from '@/components/lost-found/item-detail-dialog'
 import { AIMatchResults } from '@/components/lost-found/ai-match-results'
+import { useI18n } from '@/lib/i18n'
 import { format } from 'date-fns'
 import { ar } from 'date-fns/locale'
 
@@ -51,6 +53,7 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
 }
 
 export default function HomePage() {
+  const { t, dir, locale, setLocale } = useI18n()
   const [items, setItems] = useState<LostItem[]>([])
   const [lostReports, setLostReports] = useState<LostReport[]>([])
   const [loading, setLoading] = useState(true)
@@ -128,7 +131,7 @@ export default function HomePage() {
 
   const formatDate = (dateStr: string) => {
     try {
-      return format(new Date(dateStr), 'd MMMM yyyy', { locale: ar })
+      return format(new Date(dateStr), 'd MMMM yyyy', { locale: locale === 'ar' ? ar : undefined })
     } catch {
       return dateStr
     }
@@ -138,7 +141,7 @@ export default function HomePage() {
   const claimedCount = items.filter((i) => i.status === 'claimed').length
 
   return (
-    <div className="min-h-screen flex flex-col bg-background" dir="rtl">
+    <div className="min-h-screen flex flex-col bg-background" dir={dir}>
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -149,10 +152,10 @@ export default function HomePage() {
               </div>
               <div>
                 <h1 className="text-xl font-bold bg-gradient-to-l from-amber-600 to-orange-600 bg-clip-text text-transparent">
-                  مفقوداتي
+                  {t('appName')}
                 </h1>
                 <p className="text-[10px] text-muted-foreground -mt-1">
-                  اعثر على أشيائك المفقودة
+                  {t('appTagline')}
                 </p>
               </div>
             </div>
@@ -161,18 +164,26 @@ export default function HomePage() {
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/30">
                 <Clock className="h-3.5 w-3.5 text-amber-600" />
                 <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">
-                  {foundCount} متاح
+                  {foundCount} {t('available')}
                 </span>
               </div>
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-50 dark:bg-green-950/30">
                 <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
                 <span className="text-xs font-semibold text-green-700 dark:text-green-400">
-                  {claimedCount} تم الاسترجاع
+                  {claimedCount} {t('recovered')}
                 </span>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setLocale(locale === 'ar' ? 'en' : 'ar')}
+                title={locale === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
+              >
+                <Globe className="h-4 w-4" />
+              </Button>
               <PostLostReportDialog onReportAdded={fetchLostReports} />
               <PostItemDialog onItemAdded={fetchItems} />
             </div>
@@ -188,21 +199,20 @@ export default function HomePage() {
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 relative">
           <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
-            <div className="flex-1 text-center lg:text-right">
+            <div className={`flex-1 ${dir === 'rtl' ? 'text-center lg:text-right' : 'text-center lg:text-left'}`}>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
               >
                 <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-tight">
-                  اعثر على{' '}
+                  {t('heroTitle1')}{' '}
                   <span className="bg-gradient-to-l from-amber-600 to-orange-600 bg-clip-text text-transparent">
-                    أشيائك المفقودة
+                    {t('heroTitle2')}
                   </span>
                 </h2>
                 <p className="mt-4 text-lg text-muted-foreground max-w-lg mx-auto lg:mx-0">
-                  مجتمع يساعد بعضه البعض لاستعادة الأشياء المفقودة. انشر الأشياء
-                  التي وجدتها ليعثر عليها أصحابها.
+                  {t('appDescription')}
                 </p>
               </motion.div>
 
@@ -214,12 +224,12 @@ export default function HomePage() {
                 className="mt-6 max-w-xl mx-auto lg:mx-0"
               >
                 <div className="relative">
-                  <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Search className={`absolute top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground ${dir === 'rtl' ? 'right-4' : 'left-4'}`} />
                   <Input
-                    placeholder="ابحث عن شيء مفقود..."
+                    placeholder={t('searchPlaceholder')}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="pr-12 pl-4 h-12 text-base rounded-xl border-2 border-amber-200 dark:border-amber-800 focus:border-amber-400 dark:focus:border-amber-600 shadow-lg"
+                    className={`${dir === 'rtl' ? 'pr-12 pl-4' : 'pl-12 pr-4'} h-12 text-base rounded-xl border-2 border-amber-200 dark:border-amber-800 focus:border-amber-400 dark:focus:border-amber-600 shadow-lg`}
                   />
                 </div>
               </motion.div>
@@ -229,23 +239,23 @@ export default function HomePage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
-                className="mt-4 flex flex-wrap items-center justify-center lg:justify-start gap-2"
+                className={`mt-4 flex flex-wrap items-center ${dir === 'rtl' ? 'justify-center lg:justify-start' : 'justify-center lg:justify-start'} gap-2`}
               >
                 <Badge variant="outline" className="gap-1 text-xs bg-background/80">
                   <Shield className="h-3 w-3 text-amber-600" />
-                  تحقق من الملكية
+                  {t('featureVerification')}
                 </Badge>
                 <Badge variant="outline" className="gap-1 text-xs bg-background/80">
                   <Sparkles className="h-3 w-3 text-purple-600" />
-                  مطابقة ذكية بالذكاء الاصطناعي
+                  {t('featureAI')}
                 </Badge>
                 <Badge variant="outline" className="gap-1 text-xs bg-background/80">
                   <MapPin className="h-3 w-3 text-blue-600" />
-                  تحديد الموقع الجغرافي
+                  {t('featureMap')}
                 </Badge>
                 <Badge variant="outline" className="gap-1 text-xs bg-background/80">
                   <Gift className="h-3 w-3 text-green-600" />
-                  نظام المكافآت
+                  {t('featureReward')}
                 </Badge>
               </motion.div>
             </div>
@@ -260,7 +270,7 @@ export default function HomePage() {
               <div className="rounded-2xl overflow-hidden shadow-2xl shadow-amber-500/10 border-2 border-amber-200/50 dark:border-amber-800/50">
                 <img
                   src="/hero-image.png"
-                  alt="مفقوداتي - اعثر على أشيائك المفقودة"
+                  alt={t('appName')}
                   className="w-full h-auto object-cover"
                 />
               </div>
@@ -277,11 +287,11 @@ export default function HomePage() {
             <TabsList className="h-11">
               <TabsTrigger value="found" className="gap-1.5 px-4 text-sm">
                 <Search className="h-4 w-4" />
-                أشياء موجودة
+                {t('tabFound')}
               </TabsTrigger>
               <TabsTrigger value="lost" className="gap-1.5 px-4 text-sm">
                 <AlertCircle className="h-4 w-4" />
-                بلاغات الفقدان
+                {t('tabLost')}
               </TabsTrigger>
             </TabsList>
           </div>
@@ -302,7 +312,7 @@ export default function HomePage() {
                   onClick={() => setSelectedCategory(cat.id)}
                 >
                   {CATEGORY_ICONS[cat.id]}
-                  {cat.label}
+                  {t(cat.labelKey)}
                 </Button>
               ))}
             </div>
@@ -332,11 +342,11 @@ export default function HomePage() {
                 <div className="mx-auto w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
                   <Package className="h-10 w-10 text-muted-foreground" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">لا توجد أشياء حالياً</h3>
+                <h3 className="text-xl font-semibold mb-2">{t('emptyFoundTitle')}</h3>
                 <p className="text-muted-foreground max-w-md mx-auto">
                   {search || selectedCategory !== 'all'
-                    ? 'لم يتم العثور على نتائج مطابقة. جرب تغيير معايير البحث.'
-                    : 'كن أول من ينشر شيئاً وجده! ساعد الآخرين في استعادة أشيائهم المفقودة.'}
+                    ? t('emptyFiltered')
+                    : t('emptyFoundDesc')}
                 </p>
               </motion.div>
             ) : (
@@ -379,7 +389,7 @@ export default function HomePage() {
                           )}
 
                           {/* Status Badge */}
-                          <div className="absolute top-3 right-3">
+                          <div className={`absolute top-3 ${dir === 'rtl' ? 'right-3' : 'left-3'}`}>
                             <Badge
                               className={
                                 item.status === 'claimed'
@@ -389,13 +399,13 @@ export default function HomePage() {
                             >
                               {item.status === 'claimed' ? (
                                 <>
-                                  <CheckCircle2 className="h-3 w-3 ml-1" />
-                                  تم الاسترجاع
+                                  <CheckCircle2 className={`h-3 w-3 ${dir === 'rtl' ? 'ml-1' : 'mr-1'}`} />
+                                  {t('statusClaimed')}
                                 </>
                               ) : (
                                 <>
-                                  <Clock className="h-3 w-3 ml-1" />
-                                  متاح
+                                  <Clock className={`h-3 w-3 ${dir === 'rtl' ? 'ml-1' : 'mr-1'}`} />
+                                  {t('statusAvailable')}
                                 </>
                               )}
                             </Badge>
@@ -403,7 +413,7 @@ export default function HomePage() {
 
                           {/* Reward Badge */}
                           {item.reward && (
-                            <div className="absolute top-3 left-3">
+                            <div className={`absolute top-3 ${dir === 'rtl' ? 'left-3' : 'right-3'}`}>
                               <Badge className="bg-green-500/90 text-white backdrop-blur-sm gap-1">
                                 <Gift className="h-3 w-3" />
                                 {item.reward}
@@ -413,21 +423,20 @@ export default function HomePage() {
 
                           {/* Verification Badge */}
                           {item.hasVerification && (
-                            <div className="absolute bottom-3 left-3">
+                            <div className={`absolute bottom-3 ${dir === 'rtl' ? 'left-3' : 'right-3'}`}>
                               <Badge className="bg-blue-500/90 text-white backdrop-blur-sm gap-1 text-[10px]">
                                 <Shield className="h-3 w-3" />
-                                تحقق
+                                {t('verifyBadge')}
                               </Badge>
                             </div>
                           )}
 
                           {/* Category Badge */}
-                          <div className="absolute bottom-3 right-3">
+                          <div className={`absolute bottom-3 ${dir === 'rtl' ? 'right-3' : 'left-3'}`}>
                             <Badge
                               className={`${CATEGORY_COLORS[item.category] || CATEGORY_COLORS.other} text-xs`}
                             >
-                              {CATEGORIES.find((c) => c.id === item.category)
-                                ?.label || item.category}
+                              {t(CATEGORIES.find((c) => c.id === item.category)?.labelKey || 'catOther')}
                             </Badge>
                           </div>
                         </div>
@@ -457,7 +466,7 @@ export default function HomePage() {
                           <div className="mt-3 flex items-center justify-between">
                             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                               <Eye className="h-3.5 w-3.5" />
-                              <span>عرض التفاصيل</span>
+                              <span>{t('btnViewDetails')}</span>
                             </div>
                           </div>
                         </CardContent>
@@ -480,9 +489,9 @@ export default function HomePage() {
                 <div className="mx-auto w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
                   <AlertCircle className="h-10 w-10 text-muted-foreground" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">لا توجد بلاغات فقدان</h3>
+                <h3 className="text-xl font-semibold mb-2">{t('emptyLostTitle')}</h3>
                 <p className="text-muted-foreground max-w-md mx-auto">
-                  أبلغ عن شيء فقدته وسيساعدك الذكاء الاصطناعي في البحث عنه تلقائياً
+                  {t('emptyLostDesc')}
                 </p>
               </motion.div>
             ) : (
@@ -511,12 +520,12 @@ export default function HomePage() {
                                   : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300 shrink-0'
                               }
                             >
-                              {report.status === 'found' ? 'تم العثور' : 'مفقود'}
+                              {report.status === 'found' ? t('statusFound') : t('statusLost')}
                             </Badge>
                           </div>
 
                           <Badge className={`${CATEGORY_COLORS[report.category] || CATEGORY_COLORS.other} text-xs`}>
-                            {CATEGORIES.find((c) => c.id === report.category)?.label || report.category}
+                            {t(CATEGORIES.find((c) => c.id === report.category)?.labelKey || 'catOther')}
                           </Badge>
 
                           <p className="text-sm text-muted-foreground line-clamp-2">
@@ -537,7 +546,7 @@ export default function HomePage() {
                           {report.reward && (
                             <div className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
                               <Gift className="h-3.5 w-3.5" />
-                              <span className="font-semibold">مكافأة: {report.reward}</span>
+                              <span className="font-semibold">{t('rewardBadge')}: {report.reward}</span>
                             </div>
                           )}
 
@@ -573,7 +582,7 @@ export default function HomePage() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             onClick={scrollToTop}
-            className="fixed bottom-6 left-6 z-50 h-12 w-12 rounded-full bg-amber-600 hover:bg-amber-700 text-white shadow-lg shadow-amber-500/30 flex items-center justify-center transition-colors"
+            className={`fixed bottom-6 z-50 h-12 w-12 rounded-full bg-amber-600 hover:bg-amber-700 text-white shadow-lg shadow-amber-500/30 flex items-center justify-center transition-colors ${dir === 'rtl' ? 'left-6' : 'right-6'}`}
           >
             <ArrowUp className="h-5 w-5" />
           </motion.button>
@@ -588,10 +597,10 @@ export default function HomePage() {
               <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
                 <Search className="h-4 w-4 text-white" />
               </div>
-              <span className="font-bold text-sm">مفقوداتي</span>
+              <span className="font-bold text-sm">{t('appName')}</span>
             </div>
             <p className="text-sm text-muted-foreground text-center">
-              مجتمع يساعد بعضه البعض لاستعادة الأشياء المفقودة © {new Date().getFullYear()}
+              {t('footerText')} © {new Date().getFullYear()}
             </p>
           </div>
         </div>

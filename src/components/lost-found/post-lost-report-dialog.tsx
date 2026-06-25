@@ -22,6 +22,7 @@ import {
 import { AlertCircle, Loader2, Gift } from 'lucide-react'
 import { CATEGORIES } from '@/lib/types'
 import { useToast } from '@/hooks/use-toast'
+import { useI18n } from '@/lib/i18n'
 
 interface PostLostReportDialogProps {
   onReportAdded: () => void
@@ -31,6 +32,7 @@ export function PostLostReportDialog({ onReportAdded }: PostLostReportDialogProp
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
+  const { t, dir } = useI18n()
 
   const [form, setForm] = useState({
     title: '',
@@ -55,12 +57,12 @@ export function PostLostReportDialog({ onReportAdded }: PostLostReportDialogProp
       })
 
       if (!res.ok) {
-        throw new Error('فشل في إضافة البلاغ')
+        throw new Error('Failed to add report')
       }
 
       toast({
-        title: 'تم بنجاح',
-        description: 'تم نشر بلاغ الفقدان. سيقوم النظام بالبحث تلقائياً عن تطابقات.',
+        title: t('toastReportPublished'),
+        description: t('toastReportPublishedDesc'),
       })
 
       setForm({
@@ -78,8 +80,8 @@ export function PostLostReportDialog({ onReportAdded }: PostLostReportDialogProp
       onReportAdded()
     } catch {
       toast({
-        title: 'خطأ',
-        description: 'حدث خطأ أثناء نشر بلاغ الفقدان',
+        title: t('toastPublished'),
+        description: t('toastReportError'),
         variant: 'destructive',
       })
     } finally {
@@ -96,21 +98,21 @@ export function PostLostReportDialog({ onReportAdded }: PostLostReportDialogProp
       <DialogTrigger asChild>
         <Button size="lg" variant="outline" className="gap-2 text-base font-semibold border-2 border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/30">
           <AlertCircle className="h-5 w-5" />
-          أبلغ عن شيء مفقود
+          {t('btnReportLost')}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" dir="rtl">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" dir={dir}>
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-right">
-            أبلغ عن شيء فقدته
+            {t('postLostTitle')}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="lost-title">عنوان الشيء المفقود *</Label>
+            <Label htmlFor="lost-title">{t('labelLostTitle')}</Label>
             <Input
               id="lost-title"
-              placeholder="مثال: هاتف آيفون 15 برو ماكس أسود"
+              placeholder={t('phLostTitle')}
               value={form.title}
               onChange={(e) => updateForm('title', e.target.value)}
               required
@@ -118,10 +120,10 @@ export function PostLostReportDialog({ onReportAdded }: PostLostReportDialogProp
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="lost-description">الوصف التفصيلي *</Label>
+            <Label htmlFor="lost-description">{t('labelLostDescription')}</Label>
             <Textarea
               id="lost-description"
-              placeholder="صف الشيء المفقود بالتفصيل: اللون، العلامات المميزة، المحتوى..."
+              placeholder={t('phLostDescription')}
               value={form.description}
               onChange={(e) => updateForm('description', e.target.value)}
               rows={3}
@@ -130,19 +132,19 @@ export function PostLostReportDialog({ onReportAdded }: PostLostReportDialogProp
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="lost-category">التصنيف *</Label>
+            <Label htmlFor="lost-category">{t('labelCategory')}</Label>
             <Select
               value={form.category}
               onValueChange={(value) => updateForm('category', value)}
               required
             >
               <SelectTrigger>
-                <SelectValue placeholder="اختر التصنيف" />
+                <SelectValue placeholder={t('labelCategory')} />
               </SelectTrigger>
               <SelectContent>
                 {CATEGORIES.filter((c) => c.id !== 'all').map((cat) => (
                   <SelectItem key={cat.id} value={cat.id}>
-                    {cat.label}
+                    {t(cat.labelKey)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -150,10 +152,10 @@ export function PostLostReportDialog({ onReportAdded }: PostLostReportDialogProp
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="lost-location">آخر مكان كان فيه *</Label>
+            <Label htmlFor="lost-location">{t('labelLostLocation')}</Label>
             <Input
               id="lost-location"
-              placeholder="مثال: محطة المترو - الدقي"
+              placeholder={t('phLostLocation')}
               value={form.location}
               onChange={(e) => updateForm('location', e.target.value)}
               required
@@ -161,7 +163,7 @@ export function PostLostReportDialog({ onReportAdded }: PostLostReportDialogProp
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="lost-dateLost">تاريخ الفقدان *</Label>
+            <Label htmlFor="lost-dateLost">{t('labelDateLost')}</Label>
             <Input
               id="lost-dateLost"
               type="date"
@@ -175,13 +177,13 @@ export function PostLostReportDialog({ onReportAdded }: PostLostReportDialogProp
           <div className="p-4 rounded-lg border-2 border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/20 space-y-3">
             <Label className="flex items-center gap-1.5 text-green-700 dark:text-green-400 font-semibold">
               <Gift className="h-4 w-4" />
-              مكافأة مالية (اختياري)
+              {t('labelReward')}
             </Label>
             <p className="text-xs text-muted-foreground">
-              رصد مكافأة تشجيعية يزيد من فرص استرجاع الشيء
+              {t('rewardDescLost')}
             </p>
             <Input
-              placeholder="مثال: 500 جنيه"
+              placeholder={t('phRewardLost')}
               value={form.reward}
               onChange={(e) => updateForm('reward', e.target.value)}
             />
@@ -189,20 +191,20 @@ export function PostLostReportDialog({ onReportAdded }: PostLostReportDialogProp
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="lost-contactName">اسمك *</Label>
+              <Label htmlFor="lost-contactName">{t('labelContactName')}</Label>
               <Input
                 id="lost-contactName"
-                placeholder="اسمك الكامل"
+                placeholder={t('phContactName')}
                 value={form.contactName}
                 onChange={(e) => updateForm('contactName', e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="lost-contactPhone">رقم الهاتف *</Label>
+              <Label htmlFor="lost-contactPhone">{t('labelContactPhone')}</Label>
               <Input
                 id="lost-contactPhone"
-                placeholder="01xxxxxxxxx"
+                placeholder={t('phContactPhone')}
                 value={form.contactPhone}
                 onChange={(e) => updateForm('contactPhone', e.target.value)}
                 dir="ltr"
@@ -215,10 +217,10 @@ export function PostLostReportDialog({ onReportAdded }: PostLostReportDialogProp
             {loading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin ml-2" />
-                جاري النشر والبحث عن تطابقات...
+                {t('btnPublishingLost')}
               </>
             ) : (
-              'نشر بلاغ الفقدان'
+              t('btnPublishLost')
             )}
           </Button>
         </form>
