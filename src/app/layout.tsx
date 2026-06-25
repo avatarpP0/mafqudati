@@ -19,7 +19,11 @@ export const metadata: Metadata = {
   title: "مفقوداتي | Mafqudati - Find Your Lost Belongings",
   description: "مجتمع يساعد بعضه البعض لاستعادة الأشياء المفقودة. A community helping each other recover lost items.",
   icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+    icon: [
+      { url: "/favicon.png", sizes: "32x32", type: "image/png" },
+      { url: "/logo.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: "/logo.png",
   },
 };
 

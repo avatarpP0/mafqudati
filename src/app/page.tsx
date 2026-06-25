@@ -151,9 +151,11 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
-                <Search className="h-5 w-5 text-white" />
-              </div>
+              <img
+                src="/logo.png"
+                alt={t('appName')}
+                className="h-10 w-10 rounded-xl shadow-lg shadow-amber-500/20"
+              />
               <div>
                 <h1 className="text-xl font-bold bg-gradient-to-l from-amber-600 to-orange-600 bg-clip-text text-transparent">
                   {t('appName')}
@@ -642,9 +644,11 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-                <Search className="h-4 w-4 text-white" />
-              </div>
+              <img
+                src="/logo.png"
+                alt={t('appName')}
+                className="h-8 w-8 rounded-lg"
+              />
               <span className="font-bold text-sm">{t('appName')}</span>
             </div>
             <p className="text-sm text-muted-foreground text-center">
