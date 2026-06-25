@@ -1,65 +1,54 @@
 #!/bin/bash
-# Mafqudati - Vercel Deployment Script
-# This script prepares and deploys the project to Vercel with PostgreSQL
+# ============================================================
+# مفقوداتي - Mafqudati - Vercel Deployment Script
+# ============================================================
+# This script prepares and deploys the project to Vercel
+# with PostgreSQL (required for serverless functions)
+# ============================================================
 
 set -e
 
-echo "🚀 Mafqudati - Vercel Deployment"
-echo "=================================="
+echo "🚀 مفقوداتي - Mafqudati Vercel Deployment"
+echo "=========================================="
 echo ""
 
-# Step 1: Check if Vercel CLI is installed
+# Step 1: Switch Prisma schema to PostgreSQL
+echo "📌 Step 1: Switching Prisma to PostgreSQL..."
+cp prisma/schema.vercel.prisma prisma/schema.prisma
+echo "   ✅ Prisma schema switched to PostgreSQL"
+
+# Step 2: Check if Vercel CLI is installed
 if ! command -v vercel &> /dev/null; then
-  echo "❌ Vercel CLI not found. Installing..."
+  echo ""
+  echo "📌 Step 2: Installing Vercel CLI..."
   npm install -g vercel
+  echo "   ✅ Vercel CLI installed"
+else
+  echo ""
+  echo "📌 Step 2: Vercel CLI already installed ✅"
 fi
 
-# Step 2: Login to Vercel
-echo "📌 Step 1: Logging in to Vercel..."
+# Step 3: Login to Vercel
+echo ""
+echo "📌 Step 3: Logging in to Vercel..."
 vercel login
 
-# Step 3: Create Vercel Postgres database
+# Step 4: Deploy to Vercel (this will create the project if it doesn't exist)
 echo ""
-echo "📌 Step 2: You need to create a Vercel Postgres database."
-echo "   Go to: https://vercel.com/dashboard -> Storage -> Create Database -> Postgres"
-echo "   Or run: vercel postgres create"
-echo ""
-echo "   After creating, copy the connection string (POSTGRES_PRISMA_URL)"
-echo ""
-
-read -p "Enter your PostgreSQL connection string: " DATABASE_URL
-
-if [ -z "$DATABASE_URL" ]; then
-  echo "❌ No database URL provided. Exiting."
-  exit 1
-fi
-
-# Step 4: Switch Prisma schema to PostgreSQL
-echo ""
-echo "📌 Step 3: Switching Prisma schema to PostgreSQL..."
-sed -i 's/provider = "sqlite"/provider = "postgresql"/' prisma/schema.prisma
-
-# Step 5: Generate Prisma client with PostgreSQL
-echo "📌 Step 4: Generating Prisma client..."
-DATABASE_URL="$DATABASE_URL" npx prisma generate
-
-# Step 6: Push schema to PostgreSQL
-echo "📌 Step 5: Pushing schema to PostgreSQL..."
-DATABASE_URL="$DATABASE_URL" npx prisma db push
-
-# Step 7: Seed the database
-echo "📌 Step 6: Seeding the database..."
-DATABASE_URL="$DATABASE_URL" npx tsx seed.ts
-
-# Step 8: Deploy to Vercel
-echo "📌 Step 7: Deploying to Vercel..."
-vercel env add DATABASE_URL production <<< "$DATABASE_URL"
+echo "📌 Step 4: Deploying to Vercel..."
 vercel --prod
 
 echo ""
-echo "✅ Deployment complete!"
+echo "✅ Deployment initiated!"
 echo ""
-echo "⚠️  To revert local development to SQLite, run:"
-echo "   sed -i 's/provider = \"postgresql\"/provider = \"sqlite\"/' prisma/schema.prisma"
-echo "   bun run db:push"
-echo "   bun run seed.ts"
+echo "⚠️  IMPORTANT: After deployment, you need to:"
+echo "   1. Go to https://vercel.com/dashboard"
+echo "   2. Select your project -> Storage -> Create Database -> Postgres (Neon)"
+echo "   3. Link the database to your project"
+echo "   4. Push the schema: Run 'vercel env pull' then 'npx prisma db push'"
+echo "   5. Seed the database: Visit https://your-app.vercel.app/api/seed"
+echo ""
+echo "   Or set DATABASE_URL manually in Vercel Environment Variables."
+echo ""
+echo "🔄 To revert to local SQLite development:"
+echo "   Restore the original schema.prisma from git"

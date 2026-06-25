@@ -1,6 +1,4 @@
 {
   "framework": "nextjs",
-  "buildCommand": "npx prisma generate && next build",
-  "installCommand": "bun install",
-  "regions": ["iad1"]
+  "buildCommand": "npx prisma generate && next build"
 }

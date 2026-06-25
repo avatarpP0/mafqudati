@@ -1,0 +1,47 @@
+// This is the Prisma schema for Vercel deployment (PostgreSQL)
+// When deploying to Vercel, rename this file to schema.prisma
+// or copy its contents over the existing schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model LostItem {
+  id                    String   @id @default(cuid())
+  title                 String
+  description           String
+  category              String
+  location              String
+  dateFound             DateTime
+  imageUrl              String?
+  contactName           String
+  contactPhone          String
+  status                String   @default("found")
+  verificationQuestion  String?
+  verificationAnswer    String?
+  reward                String?
+  latitude              Float?
+  longitude             Float?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model LostReport {
+  id           String   @id @default(cuid())
+  title        String
+  description  String
+  category     String
+  location     String
+  dateLost     DateTime
+  contactName  String
+  contactPhone String
+  reward       String?
+  status       String   @default("active")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
