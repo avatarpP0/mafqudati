@@ -66,6 +66,9 @@ export const translations = {
     labelLocation: 'مكان الوجود *',
     labelDateFound: 'تاريخ الوجود *',
     labelImageUrl: 'رابط الصورة (اختياري)',
+    labelImageGen: 'الصورة (اختياري - أدخل رابط أو ولّد صورة)',
+    imageGenerated: 'تم توليد الصورة بنجاح!',
+    btnGenerateImage: 'توليد صورة',
     labelContactName: 'اسمك *',
     labelContactPhone: 'رقم الهاتف *',
     phTitle: 'مثال: هاتف آيفون أسود',
@@ -171,6 +174,20 @@ export const translations = {
 
     // Footer
     footerText: 'مجتمع يساعد بعضه البعض لاستعادة الأشياء المفقودة',
+
+    // Stats
+    statTotalItems: 'إجمالي البلاغات',
+    statRecovered: 'تم استرجاعها',
+    statAvailable: 'متاحة للاسترجاع',
+    statReports: 'بلاغات الفقدان',
+
+    // Share
+    btnShare: 'مشاركة',
+    shareCopied: 'تم نسخ الرابط!',
+
+    // Dark Mode
+    toggleDark: 'الوضع الداكن',
+    toggleLight: 'الوضع الفاتح',
   },
 
   en: {
@@ -238,6 +255,9 @@ export const translations = {
     labelLocation: 'Location Found *',
     labelDateFound: 'Date Found *',
     labelImageUrl: 'Image URL (optional)',
+    labelImageGen: 'Image (optional - enter URL or generate)',
+    imageGenerated: 'Image generated successfully!',
+    btnGenerateImage: 'Generate Image',
     labelContactName: 'Your Name *',
     labelContactPhone: 'Phone Number *',
     phTitle: 'e.g.: Black iPhone',
@@ -343,6 +363,20 @@ export const translations = {
 
     // Footer
     footerText: 'A community helping each other recover lost belongings',
+
+    // Stats
+    statTotalItems: 'Total Reports',
+    statRecovered: 'Recovered',
+    statAvailable: 'Available for Return',
+    statReports: 'Lost Reports',
+
+    // Share
+    btnShare: 'Share',
+    shareCopied: 'Link copied!',
+
+    // Dark Mode
+    toggleDark: 'Dark Mode',
+    toggleLight: 'Light Mode',
   },
 } as const
 

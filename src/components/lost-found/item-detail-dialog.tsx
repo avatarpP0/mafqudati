@@ -28,6 +28,7 @@ import {
   AlertTriangle,
   Scale,
   Ban,
+  Share2,
 } from 'lucide-react'
 import { LostItem, CATEGORIES, CATEGORY_COLORS } from '@/lib/types'
 import { format } from 'date-fns'
@@ -463,6 +464,26 @@ export function ItemDetailDialog({
                   {t('btnClaim')}
                 </>
               )}
+            </Button>
+          )}
+
+          {/* Share Button */}
+          {item.status === 'found' && (
+            <Button
+              variant="outline"
+              onClick={() => {
+                const shareText = `${item.title} - ${item.description}`
+                if (navigator.share) {
+                  navigator.share({ title: item.title, text: shareText, url: window.location.href })
+                } else {
+                  navigator.clipboard.writeText(shareText + ' ' + window.location.href)
+                  toast({ title: t('toastPublished'), description: t('shareCopied') })
+                }
+              }}
+              className="w-full gap-2"
+            >
+              <Share2 className="h-4 w-4" />
+              {t('btnShare')}
             </Button>
           )}
         </div>

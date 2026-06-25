@@ -30,6 +30,8 @@ import {
   Sparkles,
   Shield,
   Globe,
+  Moon,
+  Sun,
 } from 'lucide-react'
 import { LostItem, LostReport, CATEGORIES, CATEGORY_COLORS, CATEGORY_GRADIENTS } from '@/lib/types'
 import { PostItemDialog } from '@/components/lost-found/post-item-dialog'
@@ -37,6 +39,7 @@ import { PostLostReportDialog } from '@/components/lost-found/post-lost-report-d
 import { ItemDetailDialog } from '@/components/lost-found/item-detail-dialog'
 import { AIMatchResults } from '@/components/lost-found/ai-match-results'
 import { useI18n } from '@/lib/i18n'
+import { useTheme } from 'next-themes'
 import { format } from 'date-fns'
 import { ar } from 'date-fns/locale'
 
@@ -54,6 +57,7 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
 
 export default function HomePage() {
   const { t, dir, locale, setLocale } = useI18n()
+  const { theme, setTheme } = useTheme()
   const [items, setItems] = useState<LostItem[]>([])
   const [lostReports, setLostReports] = useState<LostReport[]>([])
   const [loading, setLoading] = useState(true)
@@ -179,6 +183,14 @@ export default function HomePage() {
               <Button
                 variant="ghost"
                 size="icon"
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                title={theme === 'dark' ? t('toggleLight') : t('toggleDark')}
+              >
+                {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setLocale(locale === 'ar' ? 'en' : 'ar')}
                 title={locale === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
               >
@@ -274,6 +286,42 @@ export default function HomePage() {
                   className="w-full h-auto object-cover"
                 />
               </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-8 border-b bg-muted/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+              <Card className="text-center p-4 border-amber-200 dark:border-amber-800">
+                <Package className="h-8 w-8 mx-auto text-amber-600 mb-2" />
+                <p className="text-2xl font-bold">{items.length + lostReports.length}</p>
+                <p className="text-xs text-muted-foreground">{t('statTotalItems')}</p>
+              </Card>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+              <Card className="text-center p-4 border-green-200 dark:border-green-800">
+                <CheckCircle2 className="h-8 w-8 mx-auto text-green-600 mb-2" />
+                <p className="text-2xl font-bold">{claimedCount}</p>
+                <p className="text-xs text-muted-foreground">{t('statRecovered')}</p>
+              </Card>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+              <Card className="text-center p-4 border-amber-200 dark:border-amber-800">
+                <Clock className="h-8 w-8 mx-auto text-amber-600 mb-2" />
+                <p className="text-2xl font-bold">{foundCount}</p>
+                <p className="text-xs text-muted-foreground">{t('statAvailable')}</p>
+              </Card>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+              <Card className="text-center p-4 border-purple-200 dark:border-purple-800">
+                <Sparkles className="h-8 w-8 mx-auto text-purple-600 mb-2" />
+                <p className="text-2xl font-bold">{lostReports.length}</p>
+                <p className="text-xs text-muted-foreground">{t('statReports')}</p>
+              </Card>
             </motion.div>
           </div>
         </div>

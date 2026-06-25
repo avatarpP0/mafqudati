@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Plus, Loader2, Shield, Gift, MapPin } from 'lucide-react'
+import { Plus, Loader2, Shield, Gift, MapPin, Wand2 } from 'lucide-react'
 import { CATEGORIES } from '@/lib/types'
 import { useToast } from '@/hooks/use-toast'
 import { MapPicker } from '@/components/lost-found/map-picker'
@@ -32,6 +32,7 @@ interface PostItemDialogProps {
 export function PostItemDialog({ onItemAdded }: PostItemDialogProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [generatingImage, setGeneratingImage] = useState(false)
   const { toast } = useToast()
   const { t, dir } = useI18n()
 
@@ -202,14 +203,45 @@ export function PostItemDialog({ onItemAdded }: PostItemDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="imageUrl">{t('labelImageUrl')}</Label>
-            <Input
-              id="imageUrl"
-              placeholder="https://example.com/image.jpg"
-              value={form.imageUrl}
-              onChange={(e) => updateForm('imageUrl', e.target.value)}
-              dir="ltr"
-            />
+            <Label htmlFor="imageUrl">{t('labelImageGen')}</Label>
+            <div className="flex gap-2">
+              <Input
+                id="imageUrl"
+                placeholder="https://example.com/image.jpg"
+                value={form.imageUrl}
+                onChange={(e) => updateForm('imageUrl', e.target.value)}
+                dir="ltr"
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="shrink-0"
+                disabled={generatingImage || !form.title}
+                onClick={async () => {
+                  setGeneratingImage(true)
+                  try {
+                    const res = await fetch('/api/generate-image', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ prompt: `${form.category} ${form.title} ${form.description}` }),
+                    })
+                    if (res.ok) {
+                      const data = await res.json()
+                      updateForm('imageUrl', data.imageUrl)
+                      toast({ title: t('toastPublished'), description: t('imageGenerated') })
+                    }
+                  } catch {
+                    toast({ title: 'Error', description: 'Failed to generate image', variant: 'destructive' })
+                  } finally {
+                    setGeneratingImage(false)
+                  }
+                }}
+              >
+                {generatingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+              </Button>
+            </div>
           </div>
 
           {/* Verification Question */}

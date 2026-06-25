@@ -178,6 +178,29 @@ Stage Summary:
 - Zero errors in console and lint
 
 ---
+Task ID: 4-improvements
+Agent: Main Agent
+Task: Add Dark Mode, Statistics Section, Share Button, and Image Generation
+
+Work Log:
+- Added ThemeProvider from next-themes in layout.tsx with class-based dark mode
+- Added Moon/Sun toggle button in header next to language switcher
+- Added Statistics/Impact section with 4 animated stat cards (Total Reports, Recovered, Available, Lost Reports)
+- Added Share button in ItemDetailDialog (navigator.share + clipboard fallback)
+- Created /api/generate-image endpoint using z-ai-web-dev-sdk for AI image generation
+- Updated PostItemDialog with "Generate Image" button (Wand2 icon) next to imageUrl field
+- Added all translation keys for new features in both Arabic and English
+- Tested all features with Agent Browser: dark mode toggle works, stats visible, share button present, image generation API returns valid base64 images
+- Zero lint errors
+
+Stage Summary:
+- Dark Mode: Full light/dark theme switching with next-themes ✅
+- Statistics Section: 4 animated cards showing community impact ✅
+- Share Button: Web Share API + clipboard fallback ✅
+- Image Generation: AI-powered image creation from item description ✅
+- All features verified working in browser
+
+---
 Task ID: 3-dialogs
 Agent: i18n-dialogs-agent
 Task: Update all dialog components to use the i18n translation system
@@ -264,4 +287,85 @@ Stage Summary:
 - Dynamic RTL/LTR layout with dir={dir} ✅
 - Category labels use t(cat.labelKey) from i18n translations ✅
 - Lint error in provider.tsx fixed (lazy state initializer) ✅
+- Zero lint errors
+
+---
+Task ID: improvements-image
+Agent: full-stack-developer
+Task: Create image generation API and update post form to support image generation
+
+Work Log:
+- Read worklog.md to understand project context (Lost & Found app with Arabic/English i18n, verification, AI matching, maps, rewards)
+- Read existing PostItemDialog component and translations file
+- Created `/home/z/my-project/src/app/api/generate-image/route.ts`:
+  - POST endpoint accepting `{ prompt }` in request body
+  - Uses `z-ai-web-dev-sdk` to generate image via `zai.images.generations.create()`
+  - Enhances prompt with "realistic photo of a lost item" and "professional product photography style" instructions
+  - Returns `{ imageUrl: data:image/png;base64,... }` on success
+  - Returns 400 if no prompt, 500 on generation failure
+- Updated `/home/z/my-project/src/components/lost-found/post-item-dialog.tsx`:
+  - Imported `Wand2` icon from lucide-react
+  - Added `generatingImage` state for loading indicator
+  - Changed imageUrl label from `t('labelImageUrl')` to `t('labelImageGen')`
+  - Wrapped imageUrl Input in flex container with "Generate Image" button
+  - Button sends category + title + description as prompt to `/api/generate-image`
+  - Button disabled when generating or when title is empty
+  - Shows Loader2 spinner while generating, Wand2 icon otherwise
+  - On success: updates form imageUrl and shows success toast
+  - On error: shows destructive toast
+- Added translation keys to BOTH ar and en in `/home/z/my-project/src/lib/i18n/translations.ts`:
+  - `labelImageGen`: 'الصورة (اختياري - أدخل رابط أو ولّد صورة)' / 'Image (optional - enter URL or generate)'
+  - `imageGenerated`: 'تم توليد الصورة بنجاح!' / 'Image generated successfully!'
+  - `btnGenerateImage`: 'توليد صورة' / 'Generate Image'
+- Ran `bun run lint` with zero errors
+- Dev server running without errors
+
+Stage Summary:
+- Image Generation API endpoint created at `/api/generate-image` using z-ai-web-dev-sdk ✅
+- PostItemDialog updated with "Generate Image" button (Wand2 icon) next to imageUrl field ✅
+- Button uses category + title + description as prompt for contextual image generation ✅
+- 3 new i18n translation keys added (labelImageGen, imageGenerated, btnGenerateImage) ✅
+- Zero lint errors, dev server running clean ✅
+
+---
+Task ID: improvements-main
+Agent: Main Agent
+Task: Add Dark Mode, Stats Section, and Share Button to the Lost & Found app
+
+Work Log:
+- Read worklog.md and all relevant source files to understand current state
+- Added ThemeProvider from next-themes to /src/app/layout.tsx:
+  - Imported `ThemeProvider` from 'next-themes'
+  - Wrapped `<I18nProvider>` with `<ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>`
+  - `suppressHydrationWarning` already present on `<html>`
+- Added Dark Mode toggle button in page.tsx header:
+  - Added `Moon`, `Sun` icon imports from lucide-react
+  - Added `useTheme` import from next-themes
+  - Added `const { theme, setTheme } = useTheme()` in component
+  - Added Moon/Sun toggle button next to Globe button in header
+  - Button toggles between 'dark' and 'light' themes
+  - Uses `t('toggleDark')` and `t('toggleLight')` for title/tooltip
+- Added Statistics/Impact section between Hero and Main Content in page.tsx:
+  - 4 animated stat cards in a 2-col mobile / 4-col desktop grid
+  - Total Reports (Package icon, amber), Recovered (CheckCircle2 icon, green)
+  - Available for Return (Clock icon, amber), Lost Reports (Sparkles icon, purple)
+  - Each card uses motion.div with staggered fade-in animations
+  - Dark mode compatible border colors
+- Added Share Button to item-detail-dialog.tsx:
+  - Added `Share2` icon import from lucide-react
+  - Added share button after the Claim Button, shown when `item.status === 'found'`
+  - Uses `navigator.share` API when available, falls back to clipboard copy
+  - Toast notification on clipboard copy with `t('shareCopied')` translation
+- Added 8 translation keys to both ar and en sections in translations.ts:
+  - statTotalItems, statRecovered, statAvailable, statReports
+  - btnShare, shareCopied
+  - toggleDark, toggleLight
+- Ran `bun run lint` with zero errors
+- Verified dev server running without errors
+
+Stage Summary:
+- Dark Mode: ThemeProvider added to layout, Moon/Sun toggle in header ✅
+- Stats Section: 4 animated stat cards between Hero and Main Content ✅
+- Share Button: Share2 button in ItemDetailDialog with navigator.share/clipboard fallback ✅
+- 8 new translation keys added to both AR and EN ✅
 - Zero lint errors
