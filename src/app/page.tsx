@@ -30,8 +30,7 @@ import {
   Sparkles,
   Shield,
   Globe,
-  Moon,
-  Sun,
+  PawPrint,
 } from 'lucide-react'
 import { LostItem, LostReport, CATEGORIES, CATEGORY_COLORS, CATEGORY_GRADIENTS } from '@/lib/types'
 import { PostItemDialog } from '@/components/lost-found/post-item-dialog'
@@ -39,7 +38,6 @@ import { PostLostReportDialog } from '@/components/lost-found/post-lost-report-d
 import { ItemDetailDialog } from '@/components/lost-found/item-detail-dialog'
 import { AIMatchResults } from '@/components/lost-found/ai-match-results'
 import { useI18n } from '@/lib/i18n'
-import { useTheme } from 'next-themes'
 import { format } from 'date-fns'
 import { ar } from 'date-fns/locale'
 
@@ -52,12 +50,12 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   accessories: <Watch className="h-4 w-4" />,
   bags: <Briefcase className="h-4 w-4" />,
   wallets: <Wallet className="h-4 w-4" />,
+  pets: <PawPrint className="h-4 w-4" />,
   other: <Package className="h-4 w-4" />,
 }
 
 export default function HomePage() {
   const { t, dir, locale, setLocale } = useI18n()
-  const { theme, setTheme } = useTheme()
   const [items, setItems] = useState<LostItem[]>([])
   const [lostReports, setLostReports] = useState<LostReport[]>([])
   const [loading, setLoading] = useState(true)
@@ -182,14 +180,6 @@ export default function HomePage() {
             </div>
 
             <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                title={theme === 'dark' ? t('toggleLight') : t('toggleDark')}
-              >
-                {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-              </Button>
               <Button
                 variant="ghost"
                 size="icon"

@@ -369,3 +369,31 @@ Stage Summary:
 - Share Button: Share2 button in ItemDetailDialog with navigator.share/clipboard fallback ✅
 - 8 new translation keys added to both AR and EN ✅
 - Zero lint errors
+
+---
+Task ID: 7
+Agent: Main Agent
+Task: Add pets category, make dark-mode-only, prepare for Vercel deployment
+
+Work Log:
+- Added 'pets' category to CATEGORIES array in /src/lib/types.ts with PawPrint icon and teal color scheme
+- Added catPets translation keys in both Arabic (حيوانات أليفة) and English (Pets) in /src/lib/i18n/translations.ts
+- Added PawPrint import and pets entry to CATEGORY_ICONS in /src/app/page.tsx
+- Added 2 pet found items (gray cat, brown Shih Tzu dog) and 1 pet lost report (white cat) to seed.ts
+- Made site dark-mode-only by:
+  - Changing ThemeProvider to forcedTheme="dark" in layout.tsx
+  - Adding className="dark" to html element
+  - Removing Moon/Sun toggle button from page.tsx header
+  - Removing unused imports (useTheme, Moon, Sun) from page.tsx
+- Created vercel.json with build configuration
+- Created scripts/vercel-deploy.sh deployment script
+- Created .env.example with database URL documentation
+- Installed Vercel CLI (v54.17.3) but couldn't authenticate (no credentials in sandbox)
+- Verified all changes with Agent Browser: dark mode enforced, pets category works, filtering works
+
+Stage Summary:
+- Pets category added with teal color scheme, Arabic/English translations, and 3 seed items ✅
+- Dark mode is now forced (no toggle, no light mode option) ✅
+- Vercel deployment prepared but requires user authentication ✅
+- Vercel deployment requires: (1) vercel login, (2) create Vercel Postgres database, (3) switch Prisma to PostgreSQL, (4) deploy
+- All changes verified with Agent Browser - no issues found ✅

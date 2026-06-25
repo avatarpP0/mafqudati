@@ -53,6 +53,7 @@ export const CATEGORIES = [
   { id: 'accessories', labelKey: 'catAccessories', icon: 'Watch' },
   { id: 'bags', labelKey: 'catBags', icon: 'Briefcase' },
   { id: 'wallets', labelKey: 'catWallets', icon: 'Wallet' },
+  { id: 'pets', labelKey: 'catPets', icon: 'PawPrint' },
   { id: 'other', labelKey: 'catOther', icon: 'Package' },
 ] as const
 
@@ -64,6 +65,7 @@ export const CATEGORY_COLORS: Record<string, string> = {
   accessories: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
   bags: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
   wallets: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
+  pets: 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-300',
   other: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300',
 }
 
@@ -75,5 +77,6 @@ export const CATEGORY_GRADIENTS: Record<string, string> = {
   accessories: 'from-purple-500 to-violet-500',
   bags: 'from-green-500 to-emerald-500',
   wallets: 'from-orange-500 to-red-500',
+  pets: 'from-teal-500 to-cyan-500',
   other: 'from-gray-500 to-slate-500',
 }

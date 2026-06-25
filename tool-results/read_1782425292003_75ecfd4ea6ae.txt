@@ -1,0 +1,663 @@
+     1→'use client'
+     2→
+     3→import { useEffect, useState, useCallback } from 'react'
+     4→import { motion, AnimatePresence } from 'framer-motion'
+     5→import { Input } from '@/components/ui/input'
+     6→import { Button } from '@/components/ui/button'
+     7→import { Badge } from '@/components/ui/badge'
+     8→import { Card, CardContent } from '@/components/ui/card'
+     9→import { Skeleton } from '@/components/ui/skeleton'
+    10→import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+    11→import {
+    12→  Search,
+    13→  MapPin,
+    14→  Calendar,
+    15→  Eye,
+    16→  Package,
+    17→  Smartphone,
+    18→  FileText,
+    19→  Key,
+    20→  Shirt,
+    21→  Watch,
+    22→  Briefcase,
+    23→  Wallet,
+    24→  LayoutGrid,
+    25→  CheckCircle2,
+    26→  Clock,
+    27→  ArrowUp,
+    28→  Gift,
+    29→  AlertCircle,
+    30→  Sparkles,
+    31→  Shield,
+    32→  Globe,
+    33→  Moon,
+    34→  Sun,
+    35→} from 'lucide-react'
+    36→import { LostItem, LostReport, CATEGORIES, CATEGORY_COLORS, CATEGORY_GRADIENTS } from '@/lib/types'
+    37→import { PostItemDialog } from '@/components/lost-found/post-item-dialog'
+    38→import { PostLostReportDialog } from '@/components/lost-found/post-lost-report-dialog'
+    39→import { ItemDetailDialog } from '@/components/lost-found/item-detail-dialog'
+    40→import { AIMatchResults } from '@/components/lost-found/ai-match-results'
+    41→import { useI18n } from '@/lib/i18n'
+    42→import { useTheme } from 'next-themes'
+    43→import { format } from 'date-fns'
+    44→import { ar } from 'date-fns/locale'
+    45→
+    46→const CATEGORY_ICONS: Record<string, React.ReactNode> = {
+    47→  all: <LayoutGrid className="h-4 w-4" />,
+    48→  electronics: <Smartphone className="h-4 w-4" />,
+    49→  documents: <FileText className="h-4 w-4" />,
+    50→  keys: <Key className="h-4 w-4" />,
+    51→  clothing: <Shirt className="h-4 w-4" />,
+    52→  accessories: <Watch className="h-4 w-4" />,
+    53→  bags: <Briefcase className="h-4 w-4" />,
+    54→  wallets: <Wallet className="h-4 w-4" />,
+    55→  other: <Package className="h-4 w-4" />,
+    56→}
+    57→
+    58→export default function HomePage() {
+    59→  const { t, dir, locale, setLocale } = useI18n()
+    60→  const { theme, setTheme } = useTheme()
+    61→  const [items, setItems] = useState<LostItem[]>([])
+    62→  const [lostReports, setLostReports] = useState<LostReport[]>([])
+    63→  const [loading, setLoading] = useState(true)
+    64→  const [search, setSearch] = useState('')
+    65→  const [selectedCategory, setSelectedCategory] = useState('all')
+    66→  const [selectedItem, setSelectedItem] = useState<LostItem | null>(null)
+    67→  const [detailOpen, setDetailOpen] = useState(false)
+    68→  const [showScrollTop, setShowScrollTop] = useState(false)
+    69→  const [activeTab, setActiveTab] = useState('found')
+    70→
+    71→  const fetchItems = useCallback(async () => {
+    72→    try {
+    73→      setLoading(true)
+    74→      const params = new URLSearchParams()
+    75→      if (selectedCategory !== 'all') params.set('category', selectedCategory)
+    76→      if (search) params.set('search', search)
+    77→
+    78→      const res = await fetch(`/api/items?${params.toString()}`)
+    79→      if (res.ok) {
+    80→        const data = await res.json()
+    81→        setItems(data)
+    82→      }
+    83→    } catch (error) {
+    84→      console.error('Error fetching items:', error)
+    85→    } finally {
+    86→      setLoading(false)
+    87→    }
+    88→  }, [selectedCategory, search])
+    89→
+    90→  const fetchLostReports = useCallback(async () => {
+    91→    try {
+    92→      const params = new URLSearchParams()
+    93→      if (selectedCategory !== 'all') params.set('category', selectedCategory)
+    94→      if (search) params.set('search', search)
+    95→
+    96→      const res = await fetch(`/api/lost-reports?${params.toString()}`)
+    97→      if (res.ok) {
+    98→        const data = await res.json()
+    99→        setLostReports(data)
+   100→      }
+   101→    } catch (error) {
+   102→      console.error('Error fetching lost reports:', error)
+   103→    }
+   104→  }, [selectedCategory, search])
+   105→
+   106→  useEffect(() => {
+   107→    fetchItems()
+   108→    fetchLostReports()
+   109→  }, [fetchItems, fetchLostReports])
+   110→
+   111→  useEffect(() => {
+   112→    const handleScroll = () => {
+   113→      setShowScrollTop(window.scrollY > 400)
+   114→    }
+   115→    window.addEventListener('scroll', handleScroll)
+   116→    return () => window.removeEventListener('scroll', handleScroll)
+   117→  }, [])
+   118→
+   119→  const scrollToTop = () => {
+   120→    window.scrollTo({ top: 0, behavior: 'smooth' })
+   121→  }
+   122→
+   123→  const handleItemClick = (item: LostItem) => {
+   124→    setSelectedItem(item)
+   125→    setDetailOpen(true)
+   126→  }
+   127→
+   128→  const handleMatchClick = (itemId: string) => {
+   129→    const item = items.find((i) => i.id === itemId)
+   130→    if (item) {
+   131→      setSelectedItem(item)
+   132→      setDetailOpen(true)
+   133→    }
+   134→  }
+   135→
+   136→  const formatDate = (dateStr: string) => {
+   137→    try {
+   138→      return format(new Date(dateStr), 'd MMMM yyyy', { locale: locale === 'ar' ? ar : undefined })
+   139→    } catch {
+   140→      return dateStr
+   141→    }
+   142→  }
+   143→
+   144→  const foundCount = items.filter((i) => i.status === 'found').length
+   145→  const claimedCount = items.filter((i) => i.status === 'claimed').length
+   146→
+   147→  return (
+   148→    <div className="min-h-screen flex flex-col bg-background" dir={dir}>
+   149→      {/* Header */}
+   150→      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b">
+   151→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   152→          <div className="flex items-center justify-between h-16">
+   153→            <div className="flex items-center gap-3">
+   154→              <img
+   155→                src="/logo.png"
+   156→                alt={t('appName')}
+   157→                className="h-10 w-10 rounded-xl shadow-lg shadow-amber-500/20"
+   158→              />
+   159→              <div>
+   160→                <h1 className="text-xl font-bold bg-gradient-to-l from-amber-600 to-orange-600 bg-clip-text text-transparent">
+   161→                  {t('appName')}
+   162→                </h1>
+   163→                <p className="text-[10px] text-muted-foreground -mt-1">
+   164→                  {t('appTagline')}
+   165→                </p>
+   166→              </div>
+   167→            </div>
+   168→
+   169→            <div className="hidden sm:flex items-center gap-2">
+   170→              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/30">
+   171→                <Clock className="h-3.5 w-3.5 text-amber-600" />
+   172→                <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">
+   173→                  {foundCount} {t('available')}
+   174→                </span>
+   175→              </div>
+   176→              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-50 dark:bg-green-950/30">
+   177→                <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+   178→                <span className="text-xs font-semibold text-green-700 dark:text-green-400">
+   179→                  {claimedCount} {t('recovered')}
+   180→                </span>
+   181→              </div>
+   182→            </div>
+   183→
+   184→            <div className="flex items-center gap-2">
+   185→              <Button
+   186→                variant="ghost"
+   187→                size="icon"
+   188→                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+   189→                title={theme === 'dark' ? t('toggleLight') : t('toggleDark')}
+   190→              >
+   191→                {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+   192→              </Button>
+   193→              <Button
+   194→                variant="ghost"
+   195→                size="icon"
+   196→                onClick={() => setLocale(locale === 'ar' ? 'en' : 'ar')}
+   197→                title={locale === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
+   198→              >
+   199→                <Globe className="h-4 w-4" />
+   200→              </Button>
+   201→              <PostLostReportDialog onReportAdded={fetchLostReports} />
+   202→              <PostItemDialog onItemAdded={fetchItems} />
+   203→            </div>
+   204→          </div>
+   205→        </div>
+   206→      </header>
+   207→
+   208→      {/* Hero Section */}
+   209→      <section className="relative overflow-hidden bg-gradient-to-bl from-amber-50 via-orange-50 to-rose-50 dark:from-amber-950/20 dark:via-orange-950/20 dark:to-rose-950/20 border-b">
+   210→        <div className="absolute inset-0 opacity-10">
+   211→          <div className="absolute top-10 right-10 w-72 h-72 bg-amber-400 rounded-full blur-3xl" />
+   212→          <div className="absolute bottom-10 left-10 w-96 h-96 bg-orange-400 rounded-full blur-3xl" />
+   213→        </div>
+   214→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 relative">
+   215→          <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
+   216→            <div className={`flex-1 ${dir === 'rtl' ? 'text-center lg:text-right' : 'text-center lg:text-left'}`}>
+   217→              <motion.div
+   218→                initial={{ opacity: 0, y: 20 }}
+   219→                animate={{ opacity: 1, y: 0 }}
+   220→                transition={{ duration: 0.5 }}
+   221→              >
+   222→                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-tight">
+   223→                  {t('heroTitle1')}{' '}
+   224→                  <span className="bg-gradient-to-l from-amber-600 to-orange-600 bg-clip-text text-transparent">
+   225→                    {t('heroTitle2')}
+   226→                  </span>
+   227→                </h2>
+   228→                <p className="mt-4 text-lg text-muted-foreground max-w-lg mx-auto lg:mx-0">
+   229→                  {t('appDescription')}
+   230→                </p>
+   231→              </motion.div>
+   232→
+   233→              {/* Search Bar */}
+   234→              <motion.div
+   235→                initial={{ opacity: 0, y: 20 }}
+   236→                animate={{ opacity: 1, y: 0 }}
+   237→                transition={{ duration: 0.5, delay: 0.1 }}
+   238→                className="mt-6 max-w-xl mx-auto lg:mx-0"
+   239→              >
+   240→                <div className="relative">
+   241→                  <Search className={`absolute top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground ${dir === 'rtl' ? 'right-4' : 'left-4'}`} />
+   242→                  <Input
+   243→                    placeholder={t('searchPlaceholder')}
+   244→                    value={search}
+   245→                    onChange={(e) => setSearch(e.target.value)}
+   246→                    className={`${dir === 'rtl' ? 'pr-12 pl-4' : 'pl-12 pr-4'} h-12 text-base rounded-xl border-2 border-amber-200 dark:border-amber-800 focus:border-amber-400 dark:focus:border-amber-600 shadow-lg`}
+   247→                  />
+   248→                </div>
+   249→              </motion.div>
+   250→
+   251→              {/* Feature Pills */}
+   252→              <motion.div
+   253→                initial={{ opacity: 0, y: 10 }}
+   254→                animate={{ opacity: 1, y: 0 }}
+   255→                transition={{ duration: 0.5, delay: 0.2 }}
+   256→                className={`mt-4 flex flex-wrap items-center ${dir === 'rtl' ? 'justify-center lg:justify-start' : 'justify-center lg:justify-start'} gap-2`}
+   257→              >
+   258→                <Badge variant="outline" className="gap-1 text-xs bg-background/80">
+   259→                  <Shield className="h-3 w-3 text-amber-600" />
+   260→                  {t('featureVerification')}
+   261→                </Badge>
+   262→                <Badge variant="outline" className="gap-1 text-xs bg-background/80">
+   263→                  <Sparkles className="h-3 w-3 text-purple-600" />
+   264→                  {t('featureAI')}
+   265→                </Badge>
+   266→                <Badge variant="outline" className="gap-1 text-xs bg-background/80">
+   267→                  <MapPin className="h-3 w-3 text-blue-600" />
+   268→                  {t('featureMap')}
+   269→                </Badge>
+   270→                <Badge variant="outline" className="gap-1 text-xs bg-background/80">
+   271→                  <Gift className="h-3 w-3 text-green-600" />
+   272→                  {t('featureReward')}
+   273→                </Badge>
+   274→              </motion.div>
+   275→            </div>
+   276→
+   277→            {/* Hero Image */}
+   278→            <motion.div
+   279→              initial={{ opacity: 0, scale: 0.9 }}
+   280→              animate={{ opacity: 1, scale: 1 }}
+   281→              transition={{ duration: 0.6, delay: 0.2 }}
+   282→              className="flex-1 max-w-md w-full"
+   283→            >
+   284→              <div className="rounded-2xl overflow-hidden shadow-2xl shadow-amber-500/10 border-2 border-amber-200/50 dark:border-amber-800/50">
+   285→                <img
+   286→                  src="/hero-image.png"
+   287→                  alt={t('appName')}
+   288→                  className="w-full h-auto object-cover"
+   289→                />
+   290→              </div>
+   291→            </motion.div>
+   292→          </div>
+   293→        </div>
+   294→      </section>
+   295→
+   296→      {/* Stats Section */}
+   297→      <section className="py-8 border-b bg-muted/30">
+   298→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   299→          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+   300→            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+   301→              <Card className="text-center p-4 border-amber-200 dark:border-amber-800">
+   302→                <Package className="h-8 w-8 mx-auto text-amber-600 mb-2" />
+   303→                <p className="text-2xl font-bold">{items.length + lostReports.length}</p>
+   304→                <p className="text-xs text-muted-foreground">{t('statTotalItems')}</p>
+   305→              </Card>
+   306→            </motion.div>
+   307→            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+   308→              <Card className="text-center p-4 border-green-200 dark:border-green-800">
+   309→                <CheckCircle2 className="h-8 w-8 mx-auto text-green-600 mb-2" />
+   310→                <p className="text-2xl font-bold">{claimedCount}</p>
+   311→                <p className="text-xs text-muted-foreground">{t('statRecovered')}</p>
+   312→              </Card>
+   313→            </motion.div>
+   314→            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+   315→              <Card className="text-center p-4 border-amber-200 dark:border-amber-800">
+   316→                <Clock className="h-8 w-8 mx-auto text-amber-600 mb-2" />
+   317→                <p className="text-2xl font-bold">{foundCount}</p>
+   318→                <p className="text-xs text-muted-foreground">{t('statAvailable')}</p>
+   319→              </Card>
+   320→            </motion.div>
+   321→            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+   322→              <Card className="text-center p-4 border-purple-200 dark:border-purple-800">
+   323→                <Sparkles className="h-8 w-8 mx-auto text-purple-600 mb-2" />
+   324→                <p className="text-2xl font-bold">{lostReports.length}</p>
+   325→                <p className="text-xs text-muted-foreground">{t('statReports')}</p>
+   326→              </Card>
+   327→            </motion.div>
+   328→          </div>
+   329→        </div>
+   330→      </section>
+   331→
+   332→      {/* Main Content */}
+   333→      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+   334→        {/* Tabs */}
+   335→        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+   336→          <div className="flex items-center justify-between mb-6">
+   337→            <TabsList className="h-11">
+   338→              <TabsTrigger value="found" className="gap-1.5 px-4 text-sm">
+   339→                <Search className="h-4 w-4" />
+   340→                {t('tabFound')}
+   341→              </TabsTrigger>
+   342→              <TabsTrigger value="lost" className="gap-1.5 px-4 text-sm">
+   343→                <AlertCircle className="h-4 w-4" />
+   344→                {t('tabLost')}
+   345→              </TabsTrigger>
+   346→            </TabsList>
+   347→          </div>
+   348→
+   349→          {/* Category Filter */}
+   350→          <div className="mb-6">
+   351→            <div className="flex flex-wrap gap-2">
+   352→              {CATEGORIES.map((cat) => (
+   353→                <Button
+   354→                  key={cat.id}
+   355→                  variant={selectedCategory === cat.id ? 'default' : 'outline'}
+   356→                  size="sm"
+   357→                  className={`gap-1.5 rounded-full transition-all ${
+   358→                    selectedCategory === cat.id
+   359→                      ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-md shadow-amber-500/20'
+   360→                      : 'hover:bg-amber-50 dark:hover:bg-amber-950/30 hover:border-amber-300 dark:hover:border-amber-700'
+   361→                  }`}
+   362→                  onClick={() => setSelectedCategory(cat.id)}
+   363→                >
+   364→                  {CATEGORY_ICONS[cat.id]}
+   365→                  {t(cat.labelKey)}
+   366→                </Button>
+   367→              ))}
+   368→            </div>
+   369→          </div>
+   370→
+   371→          {/* Found Items Tab */}
+   372→          <TabsContent value="found">
+   373→            {loading ? (
+   374→              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+   375→                {Array.from({ length: 6 }).map((_, i) => (
+   376→                  <Card key={i} className="overflow-hidden">
+   377→                    <Skeleton className="h-40 w-full" />
+   378→                    <CardContent className="p-4 space-y-3">
+   379→                      <Skeleton className="h-5 w-3/4" />
+   380→                      <Skeleton className="h-4 w-1/2" />
+   381→                      <Skeleton className="h-4 w-2/3" />
+   382→                    </CardContent>
+   383→                  </Card>
+   384→                ))}
+   385→              </div>
+   386→            ) : items.length === 0 ? (
+   387→              <motion.div
+   388→                initial={{ opacity: 0, y: 20 }}
+   389→                animate={{ opacity: 1, y: 0 }}
+   390→                className="text-center py-16"
+   391→              >
+   392→                <div className="mx-auto w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
+   393→                  <Package className="h-10 w-10 text-muted-foreground" />
+   394→                </div>
+   395→                <h3 className="text-xl font-semibold mb-2">{t('emptyFoundTitle')}</h3>
+   396→                <p className="text-muted-foreground max-w-md mx-auto">
+   397→                  {search || selectedCategory !== 'all'
+   398→                    ? t('emptyFiltered')
+   399→                    : t('emptyFoundDesc')}
+   400→                </p>
+   401→              </motion.div>
+   402→            ) : (
+   403→              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+   404→                <AnimatePresence mode="popLayout">
+   405→                  {items.map((item, index) => (
+   406→                    <motion.div
+   407→                      key={item.id}
+   408→                      layout
+   409→                      initial={{ opacity: 0, y: 20 }}
+   410→                      animate={{ opacity: 1, y: 0 }}
+   411→                      exit={{ opacity: 0, scale: 0.9 }}
+   412→                      transition={{ duration: 0.3, delay: index * 0.05 }}
+   413→                    >
+   414→                      <Card
+   415→                        className="overflow-hidden cursor-pointer group hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+   416→                        onClick={() => handleItemClick(item)}
+   417→                      >
+   418→                        {/* Card Image / Gradient Placeholder */}
+   419→                        <div className="relative h-40 overflow-hidden">
+   420→                          {item.imageUrl ? (
+   421→                            <img
+   422→                              src={item.imageUrl}
+   423→                              alt={item.title}
+   424→                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+   425→                            />
+   426→                          ) : (
+   427→                            <div
+   428→                              className={`w-full h-full bg-gradient-to-br ${
+   429→                                CATEGORY_GRADIENTS[item.category] ||
+   430→                                CATEGORY_GRADIENTS.other
+   431→                              } flex items-center justify-center`}
+   432→                            >
+   433→                              <div className="text-white/80">
+   434→                                {CATEGORY_ICONS[item.category] || (
+   435→                                  <Package className="h-12 w-12" />
+   436→                                )}
+   437→                              </div>
+   438→                            </div>
+   439→                          )}
+   440→
+   441→                          {/* Status Badge */}
+   442→                          <div className={`absolute top-3 ${dir === 'rtl' ? 'right-3' : 'left-3'}`}>
+   443→                            <Badge
+   444→                              className={
+   445→                                item.status === 'claimed'
+   446→                                  ? 'bg-green-500/90 text-white backdrop-blur-sm'
+   447→                                  : 'bg-amber-500/90 text-white backdrop-blur-sm'
+   448→                              }
+   449→                            >
+   450→                              {item.status === 'claimed' ? (
+   451→                                <>
+   452→                                  <CheckCircle2 className={`h-3 w-3 ${dir === 'rtl' ? 'ml-1' : 'mr-1'}`} />
+   453→                                  {t('statusClaimed')}
+   454→                                </>
+   455→                              ) : (
+   456→                                <>
+   457→                                  <Clock className={`h-3 w-3 ${dir === 'rtl' ? 'ml-1' : 'mr-1'}`} />
+   458→                                  {t('statusAvailable')}
+   459→                                </>
+   460→                              )}
+   461→                            </Badge>
+   462→                          </div>
+   463→
+   464→                          {/* Reward Badge */}
+   465→                          {item.reward && (
+   466→                            <div className={`absolute top-3 ${dir === 'rtl' ? 'left-3' : 'right-3'}`}>
+   467→                              <Badge className="bg-green-500/90 text-white backdrop-blur-sm gap-1">
+   468→                                <Gift className="h-3 w-3" />
+   469→                                {item.reward}
+   470→                              </Badge>
+   471→                            </div>
+   472→                          )}
+   473→
+   474→                          {/* Verification Badge */}
+   475→                          {item.hasVerification && (
+   476→                            <div className={`absolute bottom-3 ${dir === 'rtl' ? 'left-3' : 'right-3'}`}>
+   477→                              <Badge className="bg-blue-500/90 text-white backdrop-blur-sm gap-1 text-[10px]">
+   478→                                <Shield className="h-3 w-3" />
+   479→                                {t('verifyBadge')}
+   480→                              </Badge>
+   481→                            </div>
+   482→                          )}
+   483→
+   484→                          {/* Category Badge */}
+   485→                          <div className={`absolute bottom-3 ${dir === 'rtl' ? 'right-3' : 'left-3'}`}>
+   486→                            <Badge
+   487→                              className={`${CATEGORY_COLORS[item.category] || CATEGORY_COLORS.other} text-xs`}
+   488→                            >
+   489→                              {t(CATEGORIES.find((c) => c.id === item.category)?.labelKey || 'catOther')}
+   490→                            </Badge>
+   491→                          </div>
+   492→                        </div>
+   493→
+   494→                        <CardContent className="p-4">
+   495→                          <h3 className="font-bold text-base mb-2 line-clamp-1 group-hover:text-primary transition-colors">
+   496→                            {item.title}
+   497→                          </h3>
+   498→
+   499→                          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+   500→                            {item.description}
+   501→                          </p>
+   502→
+   503→                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+   504→                            <div className="flex items-center gap-1">
+   505→                              <MapPin className="h-3 w-3" />
+   506→                              <span className="line-clamp-1 max-w-[120px]">
+   507→                                {item.location}
+   508→                              </span>
+   509→                            </div>
+   510→                            <div className="flex items-center gap-1">
+   511→                              <Calendar className="h-3 w-3" />
+   512→                              <span>{formatDate(item.dateFound)}</span>
+   513→                            </div>
+   514→                          </div>
+   515→
+   516→                          <div className="mt-3 flex items-center justify-between">
+   517→                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+   518→                              <Eye className="h-3.5 w-3.5" />
+   519→                              <span>{t('btnViewDetails')}</span>
+   520→                            </div>
+   521→                          </div>
+   522→                        </CardContent>
+   523→                      </Card>
+   524→                    </motion.div>
+   525→                  ))}
+   526→                </AnimatePresence>
+   527→              </div>
+   528→            )}
+   529→          </TabsContent>
+   530→
+   531→          {/* Lost Reports Tab */}
+   532→          <TabsContent value="lost">
+   533→            {lostReports.length === 0 ? (
+   534→              <motion.div
+   535→                initial={{ opacity: 0, y: 20 }}
+   536→                animate={{ opacity: 1, y: 0 }}
+   537→                className="text-center py-16"
+   538→              >
+   539→                <div className="mx-auto w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
+   540→                  <AlertCircle className="h-10 w-10 text-muted-foreground" />
+   541→                </div>
+   542→                <h3 className="text-xl font-semibold mb-2">{t('emptyLostTitle')}</h3>
+   543→                <p className="text-muted-foreground max-w-md mx-auto">
+   544→                  {t('emptyLostDesc')}
+   545→                </p>
+   546→              </motion.div>
+   547→            ) : (
+   548→              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+   549→                <AnimatePresence mode="popLayout">
+   550→                  {lostReports.map((report, index) => (
+   551→                    <motion.div
+   552→                      key={report.id}
+   553→                      layout
+   554→                      initial={{ opacity: 0, y: 20 }}
+   555→                      animate={{ opacity: 1, y: 0 }}
+   556→                      exit={{ opacity: 0, scale: 0.9 }}
+   557→                      transition={{ duration: 0.3, delay: index * 0.05 }}
+   558→                    >
+   559→                      <Card className="overflow-hidden border-red-200 dark:border-red-800">
+   560→                        <div className="h-2 bg-gradient-to-l from-red-400 to-orange-400" />
+   561→                        <CardContent className="p-4 space-y-3">
+   562→                          <div className="flex items-start justify-between gap-2">
+   563→                            <h3 className="font-bold text-base line-clamp-1">
+   564→                              {report.title}
+   565→                            </h3>
+   566→                            <Badge
+   567→                              className={
+   568→                                report.status === 'found'
+   569→                                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 shrink-0'
+   570→                                  : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300 shrink-0'
+   571→                              }
+   572→                            >
+   573→                              {report.status === 'found' ? t('statusFound') : t('statusLost')}
+   574→                            </Badge>
+   575→                          </div>
+   576→
+   577→                          <Badge className={`${CATEGORY_COLORS[report.category] || CATEGORY_COLORS.other} text-xs`}>
+   578→                            {t(CATEGORIES.find((c) => c.id === report.category)?.labelKey || 'catOther')}
+   579→                          </Badge>
+   580→
+   581→                          <p className="text-sm text-muted-foreground line-clamp-2">
+   582→                            {report.description}
+   583→                          </p>
+   584→
+   585→                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+   586→                            <div className="flex items-center gap-1">
+   587→                              <MapPin className="h-3 w-3" />
+   588→                              <span className="line-clamp-1 max-w-[100px]">{report.location}</span>
+   589→                            </div>
+   590→                            <div className="flex items-center gap-1">
+   591→                              <Calendar className="h-3 w-3" />
+   592→                              <span>{formatDate(report.dateLost)}</span>
+   593→                            </div>
+   594→                          </div>
+   595→
+   596→                          {report.reward && (
+   597→                            <div className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
+   598→                              <Gift className="h-3.5 w-3.5" />
+   599→                              <span className="font-semibold">{t('rewardBadge')}: {report.reward}</span>
+   600→                            </div>
+   601→                          )}
+   602→
+   603→                          {/* AI Match Button */}
+   604→                          <AIMatchResults
+   605→                            report={report}
+   606→                            onMatchClick={handleMatchClick}
+   607→                          />
+   608→                        </CardContent>
+   609→                      </Card>
+   610→                    </motion.div>
+   611→                  ))}
+   612→                </AnimatePresence>
+   613→              </div>
+   614→            )}
+   615→          </TabsContent>
+   616→        </Tabs>
+   617→      </main>
+   618→
+   619→      {/* Item Detail Dialog */}
+   620→      <ItemDetailDialog
+   621→        item={selectedItem}
+   622→        open={detailOpen}
+   623→        onOpenChange={setDetailOpen}
+   624→        onItemClaimed={fetchItems}
+   625→      />
+   626→
+   627→      {/* Scroll to Top */}
+   628→      <AnimatePresence>
+   629→        {showScrollTop && (
+   630→          <motion.button
+   631→            initial={{ opacity: 0, scale: 0.8 }}
+   632→            animate={{ opacity: 1, scale: 1 }}
+   633→            exit={{ opacity: 0, scale: 0.8 }}
+   634→            onClick={scrollToTop}
+   635→            className={`fixed bottom-6 z-50 h-12 w-12 rounded-full bg-amber-600 hover:bg-amber-700 text-white shadow-lg shadow-amber-500/30 flex items-center justify-center transition-colors ${dir === 'rtl' ? 'left-6' : 'right-6'}`}
+   636→          >
+   637→            <ArrowUp className="h-5 w-5" />
+   638→          </motion.button>
+   639→        )}
+   640→      </AnimatePresence>
+   641→
+   642→      {/* Footer */}
+   643→      <footer className="bg-muted/50 border-t mt-auto">
+   644→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+   645→          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+   646→            <div className="flex items-center gap-2">
+   647→              <img
+   648→                src="/logo.png"
+   649→                alt={t('appName')}
+   650→                className="h-8 w-8 rounded-lg"
+   651→              />
+   652→              <span className="font-bold text-sm">{t('appName')}</span>
+   653→            </div>
+   654→            <p className="text-sm text-muted-foreground text-center">
+   655→              {t('footerText')} © {new Date().getFullYear()}
+   656→            </p>
+   657→          </div>
+   658→        </div>
+   659→      </footer>
+   660→    </div>
+   661→  )
+   662→}
+   663→

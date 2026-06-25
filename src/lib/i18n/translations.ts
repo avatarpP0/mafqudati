@@ -34,6 +34,7 @@ export const translations = {
     catAccessories: 'إكسسوارات',
     catBags: 'حقائب',
     catWallets: 'محافظ',
+    catPets: 'حيوانات أليفة',
     catOther: 'أخرى',
 
     // Status
@@ -223,6 +224,7 @@ export const translations = {
     catAccessories: 'Accessories',
     catBags: 'Bags',
     catWallets: 'Wallets',
+    catPets: 'Pets',
     catOther: 'Other',
 
     // Status
