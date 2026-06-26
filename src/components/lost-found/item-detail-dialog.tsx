@@ -29,6 +29,7 @@ import {
   Scale,
   Ban,
   Share2,
+  Flag,
 } from 'lucide-react'
 import { LostItem, CATEGORIES, CATEGORY_COLORS } from '@/lib/types'
 import { format } from 'date-fns'
@@ -36,6 +37,8 @@ import { ar } from 'date-fns/locale'
 import { useState } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import { MapDisplay } from '@/components/lost-found/map-display'
+import { FavoriteButton } from '@/components/lost-found/favorite-button'
+import { ReportDialog } from '@/components/lost-found/report-dialog'
 import { useI18n } from '@/lib/i18n'
 
 interface ItemDetailDialogProps {
@@ -62,6 +65,7 @@ export function ItemDetailDialog({
   const [contactRevealed, setContactRevealed] = useState(false)
   const [remainingAttempts, setRemainingAttempts] = useState(MAX_ATTEMPTS)
   const [rateLimitMessage, setRateLimitMessage] = useState<string | null>(null)
+  const [reportOpen, setReportOpen] = useState(false)
   const { toast } = useToast()
   const { t, dir, locale } = useI18n()
 
@@ -467,25 +471,49 @@ export function ItemDetailDialog({
             </Button>
           )}
 
-          {/* Share Button */}
+          {/* Share, Favorite & Report Buttons */}
           {item.status === 'found' && (
-            <Button
-              variant="outline"
-              onClick={() => {
-                const shareText = `${item.title} - ${item.description}`
-                if (navigator.share) {
-                  navigator.share({ title: item.title, text: shareText, url: window.location.href })
-                } else {
-                  navigator.clipboard.writeText(shareText + ' ' + window.location.href)
-                  toast({ title: t('toastPublished'), description: t('shareCopied') })
-                }
-              }}
-              className="w-full gap-2"
-            >
-              <Share2 className="h-4 w-4" />
-              {t('btnShare')}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const ogImageUrl = `${window.location.origin}/api/og?title=${encodeURIComponent(item.title)}&category=${encodeURIComponent(item.category)}&location=${encodeURIComponent(item.location)}`
+                  const shareText = `${item.title} - ${item.description}`
+                  if (navigator.share) {
+                    navigator.share({
+                      title: item.title,
+                      text: shareText,
+                      url: ogImageUrl,
+                    })
+                  } else {
+                    navigator.clipboard.writeText(shareText + '\n' + ogImageUrl)
+                    toast({ title: t('toastPublished'), description: t('shareCopied') })
+                  }
+                }}
+                className="flex-1 gap-2"
+              >
+                <Share2 className="h-4 w-4" />
+                {t('btnShare')}
+              </Button>
+              <FavoriteButton itemType="lostItem" itemId={item.id} />
+              <Button
+                variant="outline"
+                onClick={() => setReportOpen(true)}
+                className="flex-1 gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 border-red-200 dark:border-red-800"
+              >
+                <Flag className="h-4 w-4" />
+                {t('btnReport')}
+              </Button>
+            </div>
           )}
+
+          {/* Report Dialog */}
+          <ReportDialog
+            itemType="lostItem"
+            itemId={item.id}
+            open={reportOpen}
+            onClose={() => setReportOpen(false)}
+          />
         </div>
       </DialogContent>
     </Dialog>

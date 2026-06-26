@@ -444,3 +444,295 @@ Stage Summary:
 - Data seeded successfully (12 items + 6 reports) ✅
 - GitHub repo: https://github.com/avatarpP0/mafqudati ✅
 - Production URL: https://my-project-plum-eta-13.vercel.app ✅
+
+---
+Task ID: 1
+Agent: pwa-agent
+Task: Implement PWA (Progressive Web App) support
+
+Work Log:
+- Created `/public/manifest.json` with:
+  - App name: "مفقوداتي | Mafqudati", short name: "مفقوداتي"
+  - Theme color: #1a1a2e, background color: #0f0f23
+  - Display: standalone, start URL: /
+  - Icons referencing /logo.png (192x192 and 512x512, any maskable)
+  - Lang: ar, dir: rtl
+  - Arabic and English description
+- Created `/public/sw.js` - Service Worker with:
+  - Cache name: 'mafqudati-v1'
+  - Cache-first strategy for static assets (with stale-while-revalidate update)
+  - Network-first strategy for API calls (/api/*) with cache fallback
+  - Offline fallback page for navigation requests
+  - Old cache cleanup on activate
+  - Static asset pre-caching on install
+- Updated `/src/app/layout.tsx`:
+  - Added `<link rel="manifest" href="/manifest.json" />` in head
+  - Added `<meta name="theme-color" content="#1a1a2e" />`
+  - Added `<meta name="apple-mobile-web-app-capable" content="yes" />`
+  - Added `<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />`
+  - Added `<link rel="apple-touch-icon" href="/logo.png" />`
+  - Added `manifest: "/manifest.json"` to metadata export
+- Created `/src/hooks/use-pwa.ts`:
+  - Client-only hook using 'use client' directive
+  - Registers service worker on mount via navigator.serviceWorker.register('/sw.js')
+  - Uses `useSyncExternalStore` for SSR-safe standalone detection
+  - Listens for `beforeinstallprompt` event
+  - Provides `canInstall`, `isInstalled`, and `install()` function
+  - `install()` triggers the deferred install prompt and returns success/failure
+- Created `/src/components/pwa-install-button.tsx`:
+  - Client component using 'use client'
+  - Uses `Download` icon from lucide-react
+  - Uses shadcn/ui Button component (ghost variant, icon size)
+  - Uses `useI18n` hook for i18n support (Arabic/English)
+  - Uses `useToast` for showing installed notification
+  - Hidden when app is already installed or not installable
+  - Shows toast with `t('pwaInstalled')` when install succeeds
+- Added PWA install button to header in `/src/app/page.tsx`:
+  - Added `<PWAInstallButton />` next to Globe (language switcher) button
+  - Imported component from `@/components/pwa-install-button`
+- Added translation keys to `/src/lib/i18n/translations.ts`:
+  - `pwaInstall`: 'تثبيت التطبيق' / 'Install App'
+  - `pwaInstalled`: 'تم تثبيت التطبيق!' / 'App installed!'
+- Fixed lint error: replaced `useEffect` + `setState` for isInstalled check with `useSyncExternalStore` for SSR-safe standalone detection
+- Ran `bun run lint` with zero errors
+
+Stage Summary:
+- PWA manifest.json created with full Arabic/English support ✅
+- Service Worker with cache-first (static) and network-first (API) strategies ✅
+- Layout.tsx updated with all PWA meta tags and manifest link ✅
+- usePWA hook with service worker registration and install prompt handling ✅
+- PWA install button component with i18n and toast support ✅
+- Install button added to header next to language switcher ✅
+- 2 translation keys added (pwaInstall, pwaInstalled) ✅
+- Zero lint errors ✅
+
+---
+Task ID: 2
+Agent: full-stack-developer
+Task: Implement real image upload using Vercel Blob
+
+Work Log:
+- Read worklog.md and project context (Mafqudati Lost & Found app with i18n, verification, AI matching, maps, rewards, dark mode)
+- Read existing post-item-dialog.tsx, translations.ts, and project structure
+- Installed @vercel/blob@2.5.0 package
+- Created `/home/z/my-project/src/app/api/upload/route.ts`:
+  - POST endpoint accepting FormData with a file
+  - Uses `put()` from @vercel/blob to upload to Vercel Blob storage
+  - Generates unique filename with `lost-found/{timestamp}-{random}.{ext}` pattern
+  - Validates file type: only JPEG, PNG, WebP, GIF allowed
+  - Validates file size: 5MB maximum
+  - Returns `{ url: blob.url }` on success
+  - Proper error handling for invalid files and upload failures
+- Updated `/home/z/my-project/src/components/lost-found/post-item-dialog.tsx`:
+  - Replaced simple imageUrl text input with a full file upload experience
+  - Added drag & drop zone with Upload icon and instructional text
+  - Added click-to-upload via hidden file input
+  - Shows local preview immediately when file is selected (FileReader)
+  - Shows upload progress with Progress bar component
+  - Shows final blob URL preview after successful upload
+  - X button to clear/remove uploaded image
+  - Kept "Generate Image" button (Wand2 icon) for AI-generated images
+  - Added "Enter image URL manually" button (ImagePlus icon) as collapsed fallback
+  - Manual URL input shown only when toggled, hidden when image is set
+  - All new text uses i18n t() calls for Arabic/English support
+  - New state: uploading, uploadProgress, imagePreview, showManualUrl, isDragOver
+  - New refs: fileInputRef for hidden file input
+  - File validation on client side (type + size) with toast error messages
+- Added 8 translation keys to BOTH ar and en in `/home/z/my-project/src/lib/i18n/translations.ts`:
+  - uploadImage: 'رفع صورة' / 'Upload Image'
+  - uploadDropzone: 'اسحب الصورة هنا أو اضغط للاختيار' / 'Drag & drop image here or click to select'
+  - uploadSuccess: 'تم رفع الصورة بنجاح!' / 'Image uploaded successfully!'
+  - uploadError: 'خطأ في رفع الصورة' / 'Error uploading image'
+  - uploadTooLarge: 'حجم الصورة كبير جداً (الحد 5 ميجا)' / 'Image too large (5MB limit)'
+  - uploadInvalidType: 'نوع الملف غير مدعوم' / 'Invalid file type'
+  - uploadOr: 'أو' / 'or'
+  - uploadManualUrl: 'أدخل رابط صورة يدوياً' / 'Enter image URL manually'
+- Ran `bun run lint` — only pre-existing error in use-pwa.ts (not related to changes), zero new errors/warnings
+
+Stage Summary:
+- Vercel Blob upload API endpoint created at `/api/upload` ✅
+- File upload with drag & drop in PostItemDialog ✅
+- Image preview, progress bar, and clear functionality ✅
+- Client-side file validation (type: jpeg/png/webp/gif, size: 5MB max) ✅
+- "Generate Image" button preserved alongside upload ✅
+- Manual URL input available as collapsed fallback ✅
+- 8 new i18n translation keys added for both Arabic and English ✅
+- Zero new lint errors ✅
+
+---
+Task ID: 4
+Agent: SEO Agent
+Task: Implement SEO - Open Graph, individual item pages, and metadata
+
+Work Log:
+- Read worklog and project context to understand existing codebase
+- Updated `/src/app/layout.tsx` with comprehensive SEO metadata:
+  - Open Graph meta tags: og:title, og:description, og:image (/logo.png), og:url, og:type (website), og:locale (ar_EG), og:locale:alternate (en_US)
+  - Twitter card meta tags: twitter:card (summary_large_image), twitter:title, twitter:description, twitter:image
+  - Robots meta: index, follow with googleBot config (max-video-preview, max-image-preview: large, max-snippet)
+  - Keywords: Arabic and English keywords for lost and found (مفقوداتي, أشياء مفقودة, lost and found, etc.)
+  - Canonical URL link in both metadata and <head>
+  - Authors, creator, publisher metadata
+- Created `/src/app/api/og/route.tsx` - Dynamic OG image generation endpoint:
+  - Uses Next.js ImageResponse (edge runtime) for dynamic OG images
+  - Accepts query params: title, category, location
+  - Generates a professional card with:
+    - Dark background (#0f0f23) matching site theme
+    - Amber/orange accent color (#f59e0b) for branding and highlights
+    - App name branding "مفقوداتي | Mafqudati" with pin icon
+    - Large title text with dynamic font size based on length
+    - Category badge with tag icon and amber styling
+    - Location pill with map pin icon
+    - Decorative gradient circles and top/bottom accent bars
+    - Tagline text in Arabic
+    - RTL direction support for text
+- Updated share functionality in `/src/components/lost-found/item-detail-dialog.tsx`:
+  - Share button now constructs OG image URL: `/api/og?title=...&category=...&location=...`
+  - Web Share API uses the OG image URL as the share URL
+  - Clipboard fallback includes OG image URL in copied text
+- Added JSON-LD structured data to `/src/app/page.tsx`:
+  - Injected via useEffect as a script tag in document head
+  - Schema type: WebApplication
+  - Includes: name, description, url, applicationCategory (CommunityApplication), operatingSystem (Web)
+  - Free offer pricing (0 EGP)
+  - inLanguage: ['ar', 'en']
+  - Properly cleans up script on component unmount
+- Fixed syntax error in `/src/app/api/stats/route.ts` (closing parenthesis instead of curly brace)
+- Lint passes with zero errors
+
+Stage Summary:
+- Comprehensive SEO metadata added to layout.tsx (Open Graph, Twitter, robots, keywords, canonical)
+- Dynamic OG image generation endpoint created at /api/og with professional dark-themed card design
+- Share functionality updated to use OG image URLs for social media previews
+- JSON-LD structured data (WebApplication schema) injected into the main page
+- All changes lint-free
+
+---
+Task ID: 3
+Agent: full-stack-developer
+Task: Implement Reports & Moderation system
+
+Work Log:
+- Read project context from worklog.md and existing files (schema, API routes, components, translations, page.tsx)
+- Added 13 translation keys to both Arabic and English in `/src/lib/i18n/translations.ts`:
+  - reportTitle, reportReason, reportFake, reportInappropriate, reportWrongInfo, reportOther
+  - reportDetails, reportDetailsPh, reportSubmit, reportSuccess, reportError, btnReport
+- Created API route `/src/app/api/reports/route.ts`:
+  - POST: Creates a new report with validation (itemType, itemId, reason required; validates enum values; verifies referenced item exists)
+  - GET: Lists all reports with included lostItem/lostReport relations (for admin use)
+- Created API route `/src/app/api/reports/[id]/route.ts`:
+  - DELETE: Deletes a report by ID (resolve it), with 404 check
+- Created component `/src/components/lost-found/report-dialog.tsx`:
+  - Uses shadcn/ui Dialog, RadioGroup, Textarea, Button components
+  - Report reasons as radio buttons: fake, inappropriate, wrong_info, other
+  - Optional details textarea
+  - Submit with loading state and toast notifications
+  - Full i18n support with `useI18n()`
+  - RTL/LTR direction support
+- Updated `/src/components/lost-found/item-detail-dialog.tsx`:
+  - Added Flag icon import from lucide-react
+  - Added ReportDialog import
+  - Added reportOpen state
+  - Replaced single Share button with Share + Report side-by-side buttons
+  - Report button styled with red theme (text-red-600, red border, red hover)
+  - Added ReportDialog instance at bottom of dialog
+- Updated `/src/app/page.tsx`:
+  - Added Flag icon import from lucide-react
+  - Added ReportDialog import
+  - Added reportOpen, reportItemType, reportItemId state
+  - Added Flag icon button on each lost report card (next to FavoriteButton)
+  - Button uses stopPropagation to prevent card click interference
+  - Added ReportDialog instance after ItemDetailDialog
+- Database schema already had Report model - confirmed in sync with `bun run db:push`
+- Lint passes with zero errors
+
+Stage Summary:
+- Complete Reports & Moderation system implemented
+- API endpoints: POST /api/reports (create), GET /api/reports (list), DELETE /api/reports/[id] (resolve)
+- ReportDialog component with radio group for reason selection and optional details textarea
+- Report button added to ItemDetailDialog (next to Share button) and lost report cards
+- Full Arabic/English i18n support for all report-related text
+- All changes lint-free
+
+---
+Task ID: 5
+Agent: full-stack-developer
+Task: Implement Advanced Statistics with Charts and Heat Map
+
+Work Log:
+- Read worklog.md and project files to understand existing codebase
+- Created `/src/app/api/stats/route.ts` - GET endpoint returning comprehensive statistics:
+  - categoryDistribution: count of items per category (combining LostItem and LostReport)
+  - monthlyTrend: last 12 months with found/lost counts per month
+  - locationHeatmap: items grouped by lat/lng coordinates with location names
+  - statusDistribution: found vs claimed vs active counts
+  - topLocations: top 5 locations by item count
+- Created `/src/components/lost-found/stats-heatmap-inner.tsx` - Leaflet-based heat map:
+  - Circle markers with size proportional to item count
+  - Amber gradient coloring with opacity based on count
+  - Popups showing location name and item count
+  - Auto-calculated center from data points (defaults to Cairo)
+  - Interactive zoom/pan enabled
+- Created `/src/components/lost-found/advanced-stats.tsx` - Advanced statistics component:
+  - Dynamic import of heat map with ssr: false (Leaflet pattern)
+  - 2x2 responsive grid of chart cards
+  - Category Distribution: PieChart with inner ring, color-coded by CATEGORY_COLORS, legend with percentages
+  - Monthly Trend: BarChart with amber "Found" and purple "Lost" bars, month labels on X-axis
+  - Location Heat Map: Leaflet map with circle markers from API data
+  - Top Locations: Custom horizontal bar chart with amber gradient bars and count labels
+  - Loading skeletons for all 4 sections
+  - Full i18n support via useI18n()
+- Added 11 translation keys to `/src/lib/i18n/translations.ts` (Arabic + English):
+  - statsAdvanced, statsCategoryDist, statsMonthlyTrend, statsLocationHeat, statsTopLocations
+  - statsShowMore, statsShowLess, statsFoundItems, statsLostReports, statsLoading
+- Updated `/src/app/page.tsx`:
+  - Added AdvancedStats import
+  - Added showAdvancedStats state
+  - Added collapsible section below simple stats with toggle button
+  - Framer Motion AnimatePresence for smooth expand/collapse animation
+  - Button uses statsShowMore/statsShowLess i18n keys
+  - AdvancedStats only renders when expanded (lazy loading)
+- Lint passes with zero errors
+
+Stage Summary:
+- Full advanced statistics dashboard with 4 interactive chart sections
+- API endpoint providing 5 types of statistical data aggregations
+- Recharts library used for PieChart and BarChart
+- Leaflet heat map with dynamic import (SSR-safe)
+- Custom horizontal bar chart for top locations
+- Fully bilingual (Arabic RTL + English LTR)
+- Collapsible section with smooth animation, only loads when expanded
+
+---
+Task ID: 6
+Agent: full-stack-developer
+Task: Implement Favorites/Bookmarks system
+
+Work Log:
+- Created `/api/favorites/route.ts` with GET (list by sessionId), POST (add favorite), DELETE (remove favorite) endpoints
+- Created `use-favorites.tsx` hook with React Context (FavoritesProvider) for shared state across all components
+  - Generates/retrieves sessionId from localStorage key 'mafqudati-session'
+  - Provides: favorites array, isFavorite(), toggleFavorite(), loading, count
+  - Optimistic updates with rollback on API errors
+- Created `favorite-button.tsx` component with animated heart icon (Framer Motion spring animation)
+  - Filled red heart for favorited items, outline for non-favorited
+  - Toast notification on add/remove
+  - Two sizes: 'sm' for cards, 'default' for detail dialog
+  - Uses shadcn/ui Button with ghost variant
+- Added FavoritesProvider to layout.tsx wrapping the app
+- Updated page.tsx:
+  - Added Heart icon button in header with red badge showing favorites count
+  - Toggle between all items and favorites-only view
+  - FavoriteButton on each found item card (top-right corner over image)
+  - FavoriteButton on each lost report card (next to status badge)
+  - Empty state for favorites view with heart icon and localized messages
+  - Filtering logic: when showFavoritesOnly is active, only items matching isFavorite() are shown
+- Updated item-detail-dialog.tsx: Added FavoriteButton next to Share button
+- Added translation keys: favoriteAdded, favoriteRemoved, favoritesTitle, favoritesEmpty, favoritesEmptyDesc, btnFavorites
+- All lint checks pass cleanly
+
+Stage Summary:
+- Complete Favorites/Bookmarks system built and integrated
+- Features: session-based favorites, heart button on cards and detail dialog, favorites filter toggle, animated heart with Framer Motion, toast feedback, bilingual support
+- Tech: React Context for shared state, Prisma Favorite model, optimistic updates, Framer Motion animations
+- API: GET/POST/DELETE /api/favorites with sessionId-based identification

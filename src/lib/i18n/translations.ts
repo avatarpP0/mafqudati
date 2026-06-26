@@ -189,6 +189,54 @@ export const translations = {
     // Dark Mode
     toggleDark: 'الوضع الداكن',
     toggleLight: 'الوضع الفاتح',
+
+    // Upload
+    uploadImage: 'رفع صورة',
+    uploadDropzone: 'اسحب الصورة هنا أو اضغط للاختيار',
+    uploadSuccess: 'تم رفع الصورة بنجاح!',
+    uploadError: 'خطأ في رفع الصورة',
+    uploadTooLarge: 'حجم الصورة كبير جداً (الحد 5 ميجا)',
+    uploadInvalidType: 'نوع الملف غير مدعوم',
+    uploadOr: 'أو',
+    uploadManualUrl: 'أدخل رابط صورة يدوياً',
+
+    // PWA
+    pwaInstall: 'تثبيت التطبيق',
+    pwaInstalled: 'تم تثبيت التطبيق!',
+
+    // Favorites
+    favoriteAdded: 'تمت الإضافة إلى المفضلة',
+    favoriteRemoved: 'تمت الإزالة من المفضلة',
+    favoritesTitle: 'المفضلة',
+    favoritesEmpty: 'لا توجد عناصر في المفضلة',
+    favoritesEmptyDesc: 'اضغط على أيقونة القلب لحفظ العناصر',
+    btnFavorites: 'المفضلة',
+
+    // Report
+    reportTitle: 'الإبلاغ عن محتوى',
+    reportReason: 'سبب الإبلاغ',
+    reportFake: 'محتوى مزيف',
+    reportInappropriate: 'محتوى غير لائق',
+    reportWrongInfo: 'معلومات خاطئة',
+    reportOther: 'أخرى',
+    reportDetails: 'تفاصيل إضافية (اختياري)',
+    reportDetailsPh: 'اشرح المشكلة...',
+    reportSubmit: 'إرسال البلاغ',
+    reportSuccess: 'تم إرسال البلاغ بنجاح',
+    reportError: 'خطأ في إرسال البلاغ',
+    btnReport: 'إبلاغ',
+
+    // Advanced Stats
+    statsAdvanced: 'إحصائيات متقدمة',
+    statsCategoryDist: 'توزيع التصنيفات',
+    statsMonthlyTrend: 'الاتجاه الشهري',
+    statsLocationHeat: 'خريطة المواقع',
+    statsTopLocations: 'أكثر الأماكن',
+    statsShowMore: 'عرض الإحصائيات المتقدمة',
+    statsShowLess: 'إخفاء الإحصائيات المتقدمة',
+    statsFoundItems: 'أشياء موجودة',
+    statsLostReports: 'بلاغات الفقدان',
+    statsLoading: 'جاري تحميل الإحصائيات...',
   },
 
   en: {
@@ -379,6 +427,54 @@ export const translations = {
     // Dark Mode
     toggleDark: 'Dark Mode',
     toggleLight: 'Light Mode',
+
+    // Upload
+    uploadImage: 'Upload Image',
+    uploadDropzone: 'Drag & drop image here or click to select',
+    uploadSuccess: 'Image uploaded successfully!',
+    uploadError: 'Error uploading image',
+    uploadTooLarge: 'Image too large (5MB limit)',
+    uploadInvalidType: 'Invalid file type',
+    uploadOr: 'or',
+    uploadManualUrl: 'Enter image URL manually',
+
+    // PWA
+    pwaInstall: 'Install App',
+    pwaInstalled: 'App installed!',
+
+    // Favorites
+    favoriteAdded: 'Added to favorites',
+    favoriteRemoved: 'Removed from favorites',
+    favoritesTitle: 'Favorites',
+    favoritesEmpty: 'No favorite items',
+    favoritesEmptyDesc: 'Click the heart icon to save items',
+    btnFavorites: 'Favorites',
+
+    // Report
+    reportTitle: 'Report Content',
+    reportReason: 'Report Reason',
+    reportFake: 'Fake content',
+    reportInappropriate: 'Inappropriate content',
+    reportWrongInfo: 'Wrong information',
+    reportOther: 'Other',
+    reportDetails: 'Additional details (optional)',
+    reportDetailsPh: 'Explain the issue...',
+    reportSubmit: 'Submit Report',
+    reportSuccess: 'Report submitted successfully',
+    reportError: 'Error submitting report',
+    btnReport: 'Report',
+
+    // Advanced Stats
+    statsAdvanced: 'Advanced Statistics',
+    statsCategoryDist: 'Category Distribution',
+    statsMonthlyTrend: 'Monthly Trend',
+    statsLocationHeat: 'Location Heat Map',
+    statsTopLocations: 'Top Locations',
+    statsShowMore: 'Show Advanced Statistics',
+    statsShowLess: 'Hide Advanced Statistics',
+    statsFoundItems: 'Found Items',
+    statsLostReports: 'Lost Reports',
+    statsLoading: 'Loading statistics...',
   },
 } as const
 

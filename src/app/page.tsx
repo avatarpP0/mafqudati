@@ -31,12 +31,19 @@ import {
   Shield,
   Globe,
   PawPrint,
+  Heart,
+  Flag,
 } from 'lucide-react'
 import { LostItem, LostReport, CATEGORIES, CATEGORY_COLORS, CATEGORY_GRADIENTS } from '@/lib/types'
 import { PostItemDialog } from '@/components/lost-found/post-item-dialog'
 import { PostLostReportDialog } from '@/components/lost-found/post-lost-report-dialog'
 import { ItemDetailDialog } from '@/components/lost-found/item-detail-dialog'
 import { AIMatchResults } from '@/components/lost-found/ai-match-results'
+import { PWAInstallButton } from '@/components/pwa-install-button'
+import { AdvancedStats } from '@/components/lost-found/advanced-stats'
+import { FavoriteButton } from '@/components/lost-found/favorite-button'
+import { ReportDialog } from '@/components/lost-found/report-dialog'
+import { useFavorites } from '@/hooks/use-favorites'
 import { useI18n } from '@/lib/i18n'
 import { format } from 'date-fns'
 import { ar } from 'date-fns/locale'
@@ -65,6 +72,49 @@ export default function HomePage() {
   const [detailOpen, setDetailOpen] = useState(false)
   const [showScrollTop, setShowScrollTop] = useState(false)
   const [activeTab, setActiveTab] = useState('found')
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
+  const [showAdvancedStats, setShowAdvancedStats] = useState(false)
+  const [reportOpen, setReportOpen] = useState(false)
+  const [reportItemType, setReportItemType] = useState<'lostItem' | 'lostReport'>('lostReport')
+  const [reportItemId, setReportItemId] = useState('')
+  const { isFavorite, count: favoritesCount } = useFavorites()
+
+  // Inject JSON-LD structured data
+  useEffect(() => {
+    const siteUrl = window.location.origin
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'WebApplication',
+      name: 'مفقوداتي | Mafqudati',
+      description: 'مجتمع يساعد بعضه البعض لاستعادة الأشياء المفقودة. A community helping each other recover lost items.',
+      url: siteUrl,
+      applicationCategory: 'CommunityApplication',
+      operatingSystem: 'Web',
+      offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'EGP',
+      },
+      inLanguage: ['ar', 'en'],
+    }
+
+    const existingScript = document.getElementById('json-ld-structured-data')
+    if (existingScript) {
+      existingScript.textContent = JSON.stringify(jsonLd)
+      return
+    }
+
+    const script = document.createElement('script')
+    script.id = 'json-ld-structured-data'
+    script.type = 'application/ld+json'
+    script.textContent = JSON.stringify(jsonLd)
+    document.head.appendChild(script)
+
+    return () => {
+      const el = document.getElementById('json-ld-structured-data')
+      if (el) el.remove()
+    }
+  }, [])
 
   const fetchItems = useCallback(async () => {
     try {
@@ -180,6 +230,7 @@ export default function HomePage() {
             </div>
 
             <div className="flex items-center gap-2">
+              <PWAInstallButton />
               <Button
                 variant="ghost"
                 size="icon"
@@ -187,6 +238,20 @@ export default function HomePage() {
                 title={locale === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
               >
                 <Globe className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={showFavoritesOnly ? 'default' : 'ghost'}
+                size="icon"
+                className="relative"
+                onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+                title={t('btnFavorites')}
+              >
+                <Heart className={`h-4 w-4 ${showFavoritesOnly ? 'fill-red-500 text-red-500' : ''}`} />
+                {favoritesCount > 0 && (
+                  <Badge className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[10px] bg-red-500 text-white border-0">
+                    {favoritesCount}
+                  </Badge>
+                )}
               </Button>
               <PostLostReportDialog onReportAdded={fetchLostReports} />
               <PostItemDialog onItemAdded={fetchItems} />
@@ -319,6 +384,38 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Advanced Statistics Section */}
+      <section className="py-6 border-b bg-muted/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-center">
+            <Button
+              variant="outline"
+              onClick={() => setShowAdvancedStats(!showAdvancedStats)}
+              className="gap-2 border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+            >
+              <span>📊</span>
+              {showAdvancedStats ? t('statsShowLess') : t('statsShowMore')}
+            </Button>
+          </div>
+          <AnimatePresence>
+            {showAdvancedStats && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.4, ease: 'easeInOut' }}
+                className="overflow-hidden mt-6"
+              >
+                <h3 className="text-lg font-bold text-center mb-6">
+                  📊 {t('statsAdvanced')}
+                </h3>
+                <AdvancedStats />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </section>
+
       {/* Main Content */}
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         {/* Tabs */}
@@ -373,26 +470,34 @@ export default function HomePage() {
                   </Card>
                 ))}
               </div>
-            ) : items.length === 0 ? (
+            ) : (showFavoritesOnly ? items.filter((item) => isFavorite('lostItem', item.id)) : items).length === 0 ? (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="text-center py-16"
               >
                 <div className="mx-auto w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
-                  <Package className="h-10 w-10 text-muted-foreground" />
+                  {showFavoritesOnly ? (
+                    <Heart className="h-10 w-10 text-muted-foreground" />
+                  ) : (
+                    <Package className="h-10 w-10 text-muted-foreground" />
+                  )}
                 </div>
-                <h3 className="text-xl font-semibold mb-2">{t('emptyFoundTitle')}</h3>
+                <h3 className="text-xl font-semibold mb-2">
+                  {showFavoritesOnly ? t('favoritesEmpty') : t('emptyFoundTitle')}
+                </h3>
                 <p className="text-muted-foreground max-w-md mx-auto">
-                  {search || selectedCategory !== 'all'
-                    ? t('emptyFiltered')
-                    : t('emptyFoundDesc')}
+                  {showFavoritesOnly
+                    ? t('favoritesEmptyDesc')
+                    : search || selectedCategory !== 'all'
+                      ? t('emptyFiltered')
+                      : t('emptyFoundDesc')}
                 </p>
               </motion.div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <AnimatePresence mode="popLayout">
-                  {items.map((item, index) => (
+                  {(showFavoritesOnly ? items.filter((item) => isFavorite('lostItem', item.id)) : items).map((item, index) => (
                     <motion.div
                       key={item.id}
                       layout
@@ -427,6 +532,11 @@ export default function HomePage() {
                               </div>
                             </div>
                           )}
+
+                          {/* Favorite Button */}
+                          <div className={`absolute top-3 ${dir === 'rtl' ? 'left-3' : 'right-3'} z-10`}>
+                            <FavoriteButton itemType="lostItem" itemId={item.id} size="sm" />
+                          </div>
 
                           {/* Status Badge */}
                           <div className={`absolute top-3 ${dir === 'rtl' ? 'right-3' : 'left-3'}`}>
@@ -520,24 +630,30 @@ export default function HomePage() {
 
           {/* Lost Reports Tab */}
           <TabsContent value="lost">
-            {lostReports.length === 0 ? (
+            {(showFavoritesOnly ? lostReports.filter((r) => isFavorite('lostReport', r.id)) : lostReports).length === 0 ? (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="text-center py-16"
               >
                 <div className="mx-auto w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
-                  <AlertCircle className="h-10 w-10 text-muted-foreground" />
+                  {showFavoritesOnly ? (
+                    <Heart className="h-10 w-10 text-muted-foreground" />
+                  ) : (
+                    <AlertCircle className="h-10 w-10 text-muted-foreground" />
+                  )}
                 </div>
-                <h3 className="text-xl font-semibold mb-2">{t('emptyLostTitle')}</h3>
+                <h3 className="text-xl font-semibold mb-2">
+                  {showFavoritesOnly ? t('favoritesEmpty') : t('emptyLostTitle')}
+                </h3>
                 <p className="text-muted-foreground max-w-md mx-auto">
-                  {t('emptyLostDesc')}
+                  {showFavoritesOnly ? t('favoritesEmptyDesc') : t('emptyLostDesc')}
                 </p>
               </motion.div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <AnimatePresence mode="popLayout">
-                  {lostReports.map((report, index) => (
+                  {(showFavoritesOnly ? lostReports.filter((r) => isFavorite('lostReport', r.id)) : lostReports).map((report, index) => (
                     <motion.div
                       key={report.id}
                       layout
@@ -553,15 +669,32 @@ export default function HomePage() {
                             <h3 className="font-bold text-base line-clamp-1">
                               {report.title}
                             </h3>
-                            <Badge
-                              className={
-                                report.status === 'found'
-                                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 shrink-0'
-                                  : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300 shrink-0'
-                              }
-                            >
-                              {report.status === 'found' ? t('statusFound') : t('statusLost')}
-                            </Badge>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <FavoriteButton itemType="lostReport" itemId={report.id} size="sm" />
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setReportItemType('lostReport')
+                                  setReportItemId(report.id)
+                                  setReportOpen(true)
+                                }}
+                                title={t('btnReport')}
+                              >
+                                <Flag className="h-3.5 w-3.5" />
+                              </Button>
+                              <Badge
+                                className={
+                                  report.status === 'found'
+                                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 shrink-0'
+                                    : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300 shrink-0'
+                                }
+                              >
+                                {report.status === 'found' ? t('statusFound') : t('statusLost')}
+                              </Badge>
+                            </div>
                           </div>
 
                           <Badge className={`${CATEGORY_COLORS[report.category] || CATEGORY_COLORS.other} text-xs`}>
@@ -612,6 +745,14 @@ export default function HomePage() {
         open={detailOpen}
         onOpenChange={setDetailOpen}
         onItemClaimed={fetchItems}
+      />
+
+      {/* Report Dialog */}
+      <ReportDialog
+        itemType={reportItemType}
+        itemId={reportItemId}
+        open={reportOpen}
+        onClose={() => setReportOpen(false)}
       />
 
       {/* Scroll to Top */}

@@ -1,0 +1,29 @@
+{
+  "name": "مفقوداتي | Mafqudati",
+  "short_name": "مفقوداتي",
+  "description": "مجتمع يساعد بعضه البعض لاستعادة الأشياء المفقودة. A community helping each other recover lost items.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f0f23",
+  "theme_color": "#1a1a2e",
+  "lang": "ar",
+  "dir": "rtl",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["utilities", "lifestyle"],
+  "screenshots": [],
+  "prefer_related_applications": false
+}

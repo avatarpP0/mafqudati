@@ -48,6 +48,47 @@ export async function POST() {
       );
     `)
 
+    await db.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "Report" (
+        "id" TEXT NOT NULL,
+        "itemType" TEXT NOT NULL,
+        "itemId" TEXT NOT NULL,
+        "reason" TEXT NOT NULL,
+        "details" TEXT,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT "Report_pkey" PRIMARY KEY ("id")
+      );
+    `)
+
+    await db.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "Favorite" (
+        "id" TEXT NOT NULL,
+        "itemType" TEXT NOT NULL,
+        "itemId" TEXT NOT NULL,
+        "sessionId" TEXT NOT NULL,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT "Favorite_pkey" PRIMARY KEY ("id"),
+        CONSTRAINT "Favorite_itemType_itemId_sessionId_key" UNIQUE ("itemType", "itemId", "sessionId")
+      );
+    `)
+
+    // Add foreign key constraints if they don't exist
+    await db.$executeRawUnsafe(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'Report_itemId_fkey') THEN
+          ALTER TABLE "Report" ADD CONSTRAINT "Report_itemId_fkey" FOREIGN KEY ("itemId") REFERENCES "LostItem"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+        END IF;
+      END $$;
+    `).catch(() => {})
+
+    await db.$executeRawUnsafe(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'Favorite_itemId_fkey') THEN
+          ALTER TABLE "Favorite" ADD CONSTRAINT "Favorite_itemId_fkey" FOREIGN KEY ("itemId") REFERENCES "LostItem"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+        END IF;
+      END $$;
+    `).catch(() => {})
+
     console.log('Tables created successfully!')
 
     // Clear existing data

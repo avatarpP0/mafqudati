@@ -1,0 +1,653 @@
+     1→     1→'use client'
+     2→     2→
+     3→     3→import { useEffect, useState, useCallback } from 'react'
+     4→     4→import { motion, AnimatePresence } from 'framer-motion'
+     5→     5→import { Input } from '@/components/ui/input'
+     6→     6→import { Button } from '@/components/ui/button'
+     7→     7→import { Badge } from '@/components/ui/badge'
+     8→     8→import { Card, CardContent } from '@/components/ui/card'
+     9→     9→import { Skeleton } from '@/components/ui/skeleton'
+    10→    10→import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+    11→    11→import {
+    12→    12→  Search,
+    13→    13→  MapPin,
+    14→    14→  Calendar,
+    15→    15→  Eye,
+    16→    16→  Package,
+    17→    17→  Smartphone,
+    18→    18→  FileText,
+    19→    19→  Key,
+    20→    20→  Shirt,
+    21→    21→  Watch,
+    22→    22→  Briefcase,
+    23→    23→  Wallet,
+    24→    24→  LayoutGrid,
+    25→    25→  CheckCircle2,
+    26→    26→  Clock,
+    27→    27→  ArrowUp,
+    28→    28→  Gift,
+    29→    29→  AlertCircle,
+    30→    30→  Sparkles,
+    31→    31→  Shield,
+    32→    32→  Globe,
+    33→    33→  PawPrint,
+    34→    34→} from 'lucide-react'
+    35→    35→import { LostItem, LostReport, CATEGORIES, CATEGORY_COLORS, CATEGORY_GRADIENTS } from '@/lib/types'
+    36→    36→import { PostItemDialog } from '@/components/lost-found/post-item-dialog'
+    37→    37→import { PostLostReportDialog } from '@/components/lost-found/post-lost-report-dialog'
+    38→    38→import { ItemDetailDialog } from '@/components/lost-found/item-detail-dialog'
+    39→    39→import { AIMatchResults } from '@/components/lost-found/ai-match-results'
+    40→    40→import { useI18n } from '@/lib/i18n'
+    41→    41→import { format } from 'date-fns'
+    42→    42→import { ar } from 'date-fns/locale'
+    43→    43→
+    44→    44→const CATEGORY_ICONS: Record<string, React.ReactNode> = {
+    45→    45→  all: <LayoutGrid className="h-4 w-4" />,
+    46→    46→  electronics: <Smartphone className="h-4 w-4" />,
+    47→    47→  documents: <FileText className="h-4 w-4" />,
+    48→    48→  keys: <Key className="h-4 w-4" />,
+    49→    49→  clothing: <Shirt className="h-4 w-4" />,
+    50→    50→  accessories: <Watch className="h-4 w-4" />,
+    51→    51→  bags: <Briefcase className="h-4 w-4" />,
+    52→    52→  wallets: <Wallet className="h-4 w-4" />,
+    53→    53→  pets: <PawPrint className="h-4 w-4" />,
+    54→    54→  other: <Package className="h-4 w-4" />,
+    55→    55→}
+    56→    56→
+    57→    57→export default function HomePage() {
+    58→    58→  const { t, dir, locale, setLocale } = useI18n()
+    59→    59→  const [items, setItems] = useState<LostItem[]>([])
+    60→    60→  const [lostReports, setLostReports] = useState<LostReport[]>([])
+    61→    61→  const [loading, setLoading] = useState(true)
+    62→    62→  const [search, setSearch] = useState('')
+    63→    63→  const [selectedCategory, setSelectedCategory] = useState('all')
+    64→    64→  const [selectedItem, setSelectedItem] = useState<LostItem | null>(null)
+    65→    65→  const [detailOpen, setDetailOpen] = useState(false)
+    66→    66→  const [showScrollTop, setShowScrollTop] = useState(false)
+    67→    67→  const [activeTab, setActiveTab] = useState('found')
+    68→    68→
+    69→    69→  const fetchItems = useCallback(async () => {
+    70→    70→    try {
+    71→    71→      setLoading(true)
+    72→    72→      const params = new URLSearchParams()
+    73→    73→      if (selectedCategory !== 'all') params.set('category', selectedCategory)
+    74→    74→      if (search) params.set('search', search)
+    75→    75→
+    76→    76→      const res = await fetch(`/api/items?${params.toString()}`)
+    77→    77→      if (res.ok) {
+    78→    78→        const data = await res.json()
+    79→    79→        setItems(data)
+    80→    80→      }
+    81→    81→    } catch (error) {
+    82→    82→      console.error('Error fetching items:', error)
+    83→    83→    } finally {
+    84→    84→      setLoading(false)
+    85→    85→    }
+    86→    86→  }, [selectedCategory, search])
+    87→    87→
+    88→    88→  const fetchLostReports = useCallback(async () => {
+    89→    89→    try {
+    90→    90→      const params = new URLSearchParams()
+    91→    91→      if (selectedCategory !== 'all') params.set('category', selectedCategory)
+    92→    92→      if (search) params.set('search', search)
+    93→    93→
+    94→    94→      const res = await fetch(`/api/lost-reports?${params.toString()}`)
+    95→    95→      if (res.ok) {
+    96→    96→        const data = await res.json()
+    97→    97→        setLostReports(data)
+    98→    98→      }
+    99→    99→    } catch (error) {
+   100→   100→      console.error('Error fetching lost reports:', error)
+   101→   101→    }
+   102→   102→  }, [selectedCategory, search])
+   103→   103→
+   104→   104→  useEffect(() => {
+   105→   105→    fetchItems()
+   106→   106→    fetchLostReports()
+   107→   107→  }, [fetchItems, fetchLostReports])
+   108→   108→
+   109→   109→  useEffect(() => {
+   110→   110→    const handleScroll = () => {
+   111→   111→      setShowScrollTop(window.scrollY > 400)
+   112→   112→    }
+   113→   113→    window.addEventListener('scroll', handleScroll)
+   114→   114→    return () => window.removeEventListener('scroll', handleScroll)
+   115→   115→  }, [])
+   116→   116→
+   117→   117→  const scrollToTop = () => {
+   118→   118→    window.scrollTo({ top: 0, behavior: 'smooth' })
+   119→   119→  }
+   120→   120→
+   121→   121→  const handleItemClick = (item: LostItem) => {
+   122→   122→    setSelectedItem(item)
+   123→   123→    setDetailOpen(true)
+   124→   124→  }
+   125→   125→
+   126→   126→  const handleMatchClick = (itemId: string) => {
+   127→   127→    const item = items.find((i) => i.id === itemId)
+   128→   128→    if (item) {
+   129→   129→      setSelectedItem(item)
+   130→   130→      setDetailOpen(true)
+   131→   131→    }
+   132→   132→  }
+   133→   133→
+   134→   134→  const formatDate = (dateStr: string) => {
+   135→   135→    try {
+   136→   136→      return format(new Date(dateStr), 'd MMMM yyyy', { locale: locale === 'ar' ? ar : undefined })
+   137→   137→    } catch {
+   138→   138→      return dateStr
+   139→   139→    }
+   140→   140→  }
+   141→   141→
+   142→   142→  const foundCount = items.filter((i) => i.status === 'found').length
+   143→   143→  const claimedCount = items.filter((i) => i.status === 'claimed').length
+   144→   144→
+   145→   145→  return (
+   146→   146→    <div className="min-h-screen flex flex-col bg-background" dir={dir}>
+   147→   147→      {/* Header */}
+   148→   148→      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b">
+   149→   149→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   150→   150→          <div className="flex items-center justify-between h-16">
+   151→   151→            <div className="flex items-center gap-3">
+   152→   152→              <img
+   153→   153→                src="/logo.png"
+   154→   154→                alt={t('appName')}
+   155→   155→                className="h-10 w-10 rounded-xl shadow-lg shadow-amber-500/20"
+   156→   156→              />
+   157→   157→              <div>
+   158→   158→                <h1 className="text-xl font-bold bg-gradient-to-l from-amber-600 to-orange-600 bg-clip-text text-transparent">
+   159→   159→                  {t('appName')}
+   160→   160→                </h1>
+   161→   161→                <p className="text-[10px] text-muted-foreground -mt-1">
+   162→   162→                  {t('appTagline')}
+   163→   163→                </p>
+   164→   164→              </div>
+   165→   165→            </div>
+   166→   166→
+   167→   167→            <div className="hidden sm:flex items-center gap-2">
+   168→   168→              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/30">
+   169→   169→                <Clock className="h-3.5 w-3.5 text-amber-600" />
+   170→   170→                <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">
+   171→   171→                  {foundCount} {t('available')}
+   172→   172→                </span>
+   173→   173→              </div>
+   174→   174→              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-50 dark:bg-green-950/30">
+   175→   175→                <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+   176→   176→                <span className="text-xs font-semibold text-green-700 dark:text-green-400">
+   177→   177→                  {claimedCount} {t('recovered')}
+   178→   178→                </span>
+   179→   179→              </div>
+   180→   180→            </div>
+   181→   181→
+   182→   182→            <div className="flex items-center gap-2">
+   183→   183→              <Button
+   184→   184→                variant="ghost"
+   185→   185→                size="icon"
+   186→   186→                onClick={() => setLocale(locale === 'ar' ? 'en' : 'ar')}
+   187→   187→                title={locale === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
+   188→   188→              >
+   189→   189→                <Globe className="h-4 w-4" />
+   190→   190→              </Button>
+   191→   191→              <PostLostReportDialog onReportAdded={fetchLostReports} />
+   192→   192→              <PostItemDialog onItemAdded={fetchItems} />
+   193→   193→            </div>
+   194→   194→          </div>
+   195→   195→        </div>
+   196→   196→      </header>
+   197→   197→
+   198→   198→      {/* Hero Section */}
+   199→   199→      <section className="relative overflow-hidden bg-gradient-to-bl from-amber-50 via-orange-50 to-rose-50 dark:from-amber-950/20 dark:via-orange-950/20 dark:to-rose-950/20 border-b">
+   200→   200→        <div className="absolute inset-0 opacity-10">
+   201→   201→          <div className="absolute top-10 right-10 w-72 h-72 bg-amber-400 rounded-full blur-3xl" />
+   202→   202→          <div className="absolute bottom-10 left-10 w-96 h-96 bg-orange-400 rounded-full blur-3xl" />
+   203→   203→        </div>
+   204→   204→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 relative">
+   205→   205→          <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
+   206→   206→            <div className={`flex-1 ${dir === 'rtl' ? 'text-center lg:text-right' : 'text-center lg:text-left'}`}>
+   207→   207→              <motion.div
+   208→   208→                initial={{ opacity: 0, y: 20 }}
+   209→   209→                animate={{ opacity: 1, y: 0 }}
+   210→   210→                transition={{ duration: 0.5 }}
+   211→   211→              >
+   212→   212→                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-tight">
+   213→   213→                  {t('heroTitle1')}{' '}
+   214→   214→                  <span className="bg-gradient-to-l from-amber-600 to-orange-600 bg-clip-text text-transparent">
+   215→   215→                    {t('heroTitle2')}
+   216→   216→                  </span>
+   217→   217→                </h2>
+   218→   218→                <p className="mt-4 text-lg text-muted-foreground max-w-lg mx-auto lg:mx-0">
+   219→   219→                  {t('appDescription')}
+   220→   220→                </p>
+   221→   221→              </motion.div>
+   222→   222→
+   223→   223→              {/* Search Bar */}
+   224→   224→              <motion.div
+   225→   225→                initial={{ opacity: 0, y: 20 }}
+   226→   226→                animate={{ opacity: 1, y: 0 }}
+   227→   227→                transition={{ duration: 0.5, delay: 0.1 }}
+   228→   228→                className="mt-6 max-w-xl mx-auto lg:mx-0"
+   229→   229→              >
+   230→   230→                <div className="relative">
+   231→   231→                  <Search className={`absolute top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground ${dir === 'rtl' ? 'right-4' : 'left-4'}`} />
+   232→   232→                  <Input
+   233→   233→                    placeholder={t('searchPlaceholder')}
+   234→   234→                    value={search}
+   235→   235→                    onChange={(e) => setSearch(e.target.value)}
+   236→   236→                    className={`${dir === 'rtl' ? 'pr-12 pl-4' : 'pl-12 pr-4'} h-12 text-base rounded-xl border-2 border-amber-200 dark:border-amber-800 focus:border-amber-400 dark:focus:border-amber-600 shadow-lg`}
+   237→   237→                  />
+   238→   238→                </div>
+   239→   239→              </motion.div>
+   240→   240→
+   241→   241→              {/* Feature Pills */}
+   242→   242→              <motion.div
+   243→   243→                initial={{ opacity: 0, y: 10 }}
+   244→   244→                animate={{ opacity: 1, y: 0 }}
+   245→   245→                transition={{ duration: 0.5, delay: 0.2 }}
+   246→   246→                className={`mt-4 flex flex-wrap items-center ${dir === 'rtl' ? 'justify-center lg:justify-start' : 'justify-center lg:justify-start'} gap-2`}
+   247→   247→              >
+   248→   248→                <Badge variant="outline" className="gap-1 text-xs bg-background/80">
+   249→   249→                  <Shield className="h-3 w-3 text-amber-600" />
+   250→   250→                  {t('featureVerification')}
+   251→   251→                </Badge>
+   252→   252→                <Badge variant="outline" className="gap-1 text-xs bg-background/80">
+   253→   253→                  <Sparkles className="h-3 w-3 text-purple-600" />
+   254→   254→                  {t('featureAI')}
+   255→   255→                </Badge>
+   256→   256→                <Badge variant="outline" className="gap-1 text-xs bg-background/80">
+   257→   257→                  <MapPin className="h-3 w-3 text-blue-600" />
+   258→   258→                  {t('featureMap')}
+   259→   259→                </Badge>
+   260→   260→                <Badge variant="outline" className="gap-1 text-xs bg-background/80">
+   261→   261→                  <Gift className="h-3 w-3 text-green-600" />
+   262→   262→                  {t('featureReward')}
+   263→   263→                </Badge>
+   264→   264→              </motion.div>
+   265→   265→            </div>
+   266→   266→
+   267→   267→            {/* Hero Image */}
+   268→   268→            <motion.div
+   269→   269→              initial={{ opacity: 0, scale: 0.9 }}
+   270→   270→              animate={{ opacity: 1, scale: 1 }}
+   271→   271→              transition={{ duration: 0.6, delay: 0.2 }}
+   272→   272→              className="flex-1 max-w-md w-full"
+   273→   273→            >
+   274→   274→              <div className="rounded-2xl overflow-hidden shadow-2xl shadow-amber-500/10 border-2 border-amber-200/50 dark:border-amber-800/50">
+   275→   275→                <img
+   276→   276→                  src="/hero-image.png"
+   277→   277→                  alt={t('appName')}
+   278→   278→                  className="w-full h-auto object-cover"
+   279→   279→                />
+   280→   280→              </div>
+   281→   281→            </motion.div>
+   282→   282→          </div>
+   283→   283→        </div>
+   284→   284→      </section>
+   285→   285→
+   286→   286→      {/* Stats Section */}
+   287→   287→      <section className="py-8 border-b bg-muted/30">
+   288→   288→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   289→   289→          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+   290→   290→            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+   291→   291→              <Card className="text-center p-4 border-amber-200 dark:border-amber-800">
+   292→   292→                <Package className="h-8 w-8 mx-auto text-amber-600 mb-2" />
+   293→   293→                <p className="text-2xl font-bold">{items.length + lostReports.length}</p>
+   294→   294→                <p className="text-xs text-muted-foreground">{t('statTotalItems')}</p>
+   295→   295→              </Card>
+   296→   296→            </motion.div>
+   297→   297→            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+   298→   298→              <Card className="text-center p-4 border-green-200 dark:border-green-800">
+   299→   299→                <CheckCircle2 className="h-8 w-8 mx-auto text-green-600 mb-2" />
+   300→   300→                <p className="text-2xl font-bold">{claimedCount}</p>
+   301→   301→                <p className="text-xs text-muted-foreground">{t('statRecovered')}</p>
+   302→   302→              </Card>
+   303→   303→            </motion.div>
+   304→   304→            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+   305→   305→              <Card className="text-center p-4 border-amber-200 dark:border-amber-800">
+   306→   306→                <Clock className="h-8 w-8 mx-auto text-amber-600 mb-2" />
+   307→   307→                <p className="text-2xl font-bold">{foundCount}</p>
+   308→   308→                <p className="text-xs text-muted-foreground">{t('statAvailable')}</p>
+   309→   309→              </Card>
+   310→   310→            </motion.div>
+   311→   311→            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+   312→   312→              <Card className="text-center p-4 border-purple-200 dark:border-purple-800">
+   313→   313→                <Sparkles className="h-8 w-8 mx-auto text-purple-600 mb-2" />
+   314→   314→                <p className="text-2xl font-bold">{lostReports.length}</p>
+   315→   315→                <p className="text-xs text-muted-foreground">{t('statReports')}</p>
+   316→   316→              </Card>
+   317→   317→            </motion.div>
+   318→   318→          </div>
+   319→   319→        </div>
+   320→   320→      </section>
+   321→   321→
+   322→   322→      {/* Main Content */}
+   323→   323→      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+   324→   324→        {/* Tabs */}
+   325→   325→        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+   326→   326→          <div className="flex items-center justify-between mb-6">
+   327→   327→            <TabsList className="h-11">
+   328→   328→              <TabsTrigger value="found" className="gap-1.5 px-4 text-sm">
+   329→   329→                <Search className="h-4 w-4" />
+   330→   330→                {t('tabFound')}
+   331→   331→              </TabsTrigger>
+   332→   332→              <TabsTrigger value="lost" className="gap-1.5 px-4 text-sm">
+   333→   333→                <AlertCircle className="h-4 w-4" />
+   334→   334→                {t('tabLost')}
+   335→   335→              </TabsTrigger>
+   336→   336→            </TabsList>
+   337→   337→          </div>
+   338→   338→
+   339→   339→          {/* Category Filter */}
+   340→   340→          <div className="mb-6">
+   341→   341→            <div className="flex flex-wrap gap-2">
+   342→   342→              {CATEGORIES.map((cat) => (
+   343→   343→                <Button
+   344→   344→                  key={cat.id}
+   345→   345→                  variant={selectedCategory === cat.id ? 'default' : 'outline'}
+   346→   346→                  size="sm"
+   347→   347→                  className={`gap-1.5 rounded-full transition-all ${
+   348→   348→                    selectedCategory === cat.id
+   349→   349→                      ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-md shadow-amber-500/20'
+   350→   350→                      : 'hover:bg-amber-50 dark:hover:bg-amber-950/30 hover:border-amber-300 dark:hover:border-amber-700'
+   351→   351→                  }`}
+   352→   352→                  onClick={() => setSelectedCategory(cat.id)}
+   353→   353→                >
+   354→   354→                  {CATEGORY_ICONS[cat.id]}
+   355→   355→                  {t(cat.labelKey)}
+   356→   356→                </Button>
+   357→   357→              ))}
+   358→   358→            </div>
+   359→   359→          </div>
+   360→   360→
+   361→   361→          {/* Found Items Tab */}
+   362→   362→          <TabsContent value="found">
+   363→   363→            {loading ? (
+   364→   364→              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+   365→   365→                {Array.from({ length: 6 }).map((_, i) => (
+   366→   366→                  <Card key={i} className="overflow-hidden">
+   367→   367→                    <Skeleton className="h-40 w-full" />
+   368→   368→                    <CardContent className="p-4 space-y-3">
+   369→   369→                      <Skeleton className="h-5 w-3/4" />
+   370→   370→                      <Skeleton className="h-4 w-1/2" />
+   371→   371→                      <Skeleton className="h-4 w-2/3" />
+   372→   372→                    </CardContent>
+   373→   373→                  </Card>
+   374→   374→                ))}
+   375→   375→              </div>
+   376→   376→            ) : items.length === 0 ? (
+   377→   377→              <motion.div
+   378→   378→                initial={{ opacity: 0, y: 20 }}
+   379→   379→                animate={{ opacity: 1, y: 0 }}
+   380→   380→                className="text-center py-16"
+   381→   381→              >
+   382→   382→                <div className="mx-auto w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
+   383→   383→                  <Package className="h-10 w-10 text-muted-foreground" />
+   384→   384→                </div>
+   385→   385→                <h3 className="text-xl font-semibold mb-2">{t('emptyFoundTitle')}</h3>
+   386→   386→                <p className="text-muted-foreground max-w-md mx-auto">
+   387→   387→                  {search || selectedCategory !== 'all'
+   388→   388→                    ? t('emptyFiltered')
+   389→   389→                    : t('emptyFoundDesc')}
+   390→   390→                </p>
+   391→   391→              </motion.div>
+   392→   392→            ) : (
+   393→   393→              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+   394→   394→                <AnimatePresence mode="popLayout">
+   395→   395→                  {items.map((item, index) => (
+   396→   396→                    <motion.div
+   397→   397→                      key={item.id}
+   398→   398→                      layout
+   399→   399→                      initial={{ opacity: 0, y: 20 }}
+   400→   400→                      animate={{ opacity: 1, y: 0 }}
+   401→   401→                      exit={{ opacity: 0, scale: 0.9 }}
+   402→   402→                      transition={{ duration: 0.3, delay: index * 0.05 }}
+   403→   403→                    >
+   404→   404→                      <Card
+   405→   405→                        className="overflow-hidden cursor-pointer group hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+   406→   406→                        onClick={() => handleItemClick(item)}
+   407→   407→                      >
+   408→   408→                        {/* Card Image / Gradient Placeholder */}
+   409→   409→                        <div className="relative h-40 overflow-hidden">
+   410→   410→                          {item.imageUrl ? (
+   411→   411→                            <img
+   412→   412→                              src={item.imageUrl}
+   413→   413→                              alt={item.title}
+   414→   414→                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+   415→   415→                            />
+   416→   416→                          ) : (
+   417→   417→                            <div
+   418→   418→                              className={`w-full h-full bg-gradient-to-br ${
+   419→   419→                                CATEGORY_GRADIENTS[item.category] ||
+   420→   420→                                CATEGORY_GRADIENTS.other
+   421→   421→                              } flex items-center justify-center`}
+   422→   422→                            >
+   423→   423→                              <div className="text-white/80">
+   424→   424→                                {CATEGORY_ICONS[item.category] || (
+   425→   425→                                  <Package className="h-12 w-12" />
+   426→   426→                                )}
+   427→   427→                              </div>
+   428→   428→                            </div>
+   429→   429→                          )}
+   430→   430→
+   431→   431→                          {/* Status Badge */}
+   432→   432→                          <div className={`absolute top-3 ${dir === 'rtl' ? 'right-3' : 'left-3'}`}>
+   433→   433→                            <Badge
+   434→   434→                              className={
+   435→   435→                                item.status === 'claimed'
+   436→   436→                                  ? 'bg-green-500/90 text-white backdrop-blur-sm'
+   437→   437→                                  : 'bg-amber-500/90 text-white backdrop-blur-sm'
+   438→   438→                              }
+   439→   439→                            >
+   440→   440→                              {item.status === 'claimed' ? (
+   441→   441→                                <>
+   442→   442→                                  <CheckCircle2 className={`h-3 w-3 ${dir === 'rtl' ? 'ml-1' : 'mr-1'}`} />
+   443→   443→                                  {t('statusClaimed')}
+   444→   444→                                </>
+   445→   445→                              ) : (
+   446→   446→                                <>
+   447→   447→                                  <Clock className={`h-3 w-3 ${dir === 'rtl' ? 'ml-1' : 'mr-1'}`} />
+   448→   448→                                  {t('statusAvailable')}
+   449→   449→                                </>
+   450→   450→                              )}
+   451→   451→                            </Badge>
+   452→   452→                          </div>
+   453→   453→
+   454→   454→                          {/* Reward Badge */}
+   455→   455→                          {item.reward && (
+   456→   456→                            <div className={`absolute top-3 ${dir === 'rtl' ? 'left-3' : 'right-3'}`}>
+   457→   457→                              <Badge className="bg-green-500/90 text-white backdrop-blur-sm gap-1">
+   458→   458→                                <Gift className="h-3 w-3" />
+   459→   459→                                {item.reward}
+   460→   460→                              </Badge>
+   461→   461→                            </div>
+   462→   462→                          )}
+   463→   463→
+   464→   464→                          {/* Verification Badge */}
+   465→   465→                          {item.hasVerification && (
+   466→   466→                            <div className={`absolute bottom-3 ${dir === 'rtl' ? 'left-3' : 'right-3'}`}>
+   467→   467→                              <Badge className="bg-blue-500/90 text-white backdrop-blur-sm gap-1 text-[10px]">
+   468→   468→                                <Shield className="h-3 w-3" />
+   469→   469→                                {t('verifyBadge')}
+   470→   470→                              </Badge>
+   471→   471→                            </div>
+   472→   472→                          )}
+   473→   473→
+   474→   474→                          {/* Category Badge */}
+   475→   475→                          <div className={`absolute bottom-3 ${dir === 'rtl' ? 'right-3' : 'left-3'}`}>
+   476→   476→                            <Badge
+   477→   477→                              className={`${CATEGORY_COLORS[item.category] || CATEGORY_COLORS.other} text-xs`}
+   478→   478→                            >
+   479→   479→                              {t(CATEGORIES.find((c) => c.id === item.category)?.labelKey || 'catOther')}
+   480→   480→                            </Badge>
+   481→   481→                          </div>
+   482→   482→                        </div>
+   483→   483→
+   484→   484→                        <CardContent className="p-4">
+   485→   485→                          <h3 className="font-bold text-base mb-2 line-clamp-1 group-hover:text-primary transition-colors">
+   486→   486→                            {item.title}
+   487→   487→                          </h3>
+   488→   488→
+   489→   489→                          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+   490→   490→                            {item.description}
+   491→   491→                          </p>
+   492→   492→
+   493→   493→                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+   494→   494→                            <div className="flex items-center gap-1">
+   495→   495→                              <MapPin className="h-3 w-3" />
+   496→   496→                              <span className="line-clamp-1 max-w-[120px]">
+   497→   497→                                {item.location}
+   498→   498→                              </span>
+   499→   499→                            </div>
+   500→   500→                            <div className="flex items-center gap-1">
+   501→   501→                              <Calendar className="h-3 w-3" />
+   502→   502→                              <span>{formatDate(item.dateFound)}</span>
+   503→   503→                            </div>
+   504→   504→                          </div>
+   505→   505→
+   506→   506→                          <div className="mt-3 flex items-center justify-between">
+   507→   507→                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+   508→   508→                              <Eye className="h-3.5 w-3.5" />
+   509→   509→                              <span>{t('btnViewDetails')}</span>
+   510→   510→                            </div>
+   511→   511→                          </div>
+   512→   512→                        </CardContent>
+   513→   513→                      </Card>
+   514→   514→                    </motion.div>
+   515→   515→                  ))}
+   516→   516→                </AnimatePresence>
+   517→   517→              </div>
+   518→   518→            )}
+   519→   519→          </TabsContent>
+   520→   520→
+   521→   521→          {/* Lost Reports Tab */}
+   522→   522→          <TabsContent value="lost">
+   523→   523→            {lostReports.length === 0 ? (
+   524→   524→              <motion.div
+   525→   525→                initial={{ opacity: 0, y: 20 }}
+   526→   526→                animate={{ opacity: 1, y: 0 }}
+   527→   527→                className="text-center py-16"
+   528→   528→              >
+   529→   529→                <div className="mx-auto w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
+   530→   530→                  <AlertCircle className="h-10 w-10 text-muted-foreground" />
+   531→   531→                </div>
+   532→   532→                <h3 className="text-xl font-semibold mb-2">{t('emptyLostTitle')}</h3>
+   533→   533→                <p className="text-muted-foreground max-w-md mx-auto">
+   534→   534→                  {t('emptyLostDesc')}
+   535→   535→                </p>
+   536→   536→              </motion.div>
+   537→   537→            ) : (
+   538→   538→              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+   539→   539→                <AnimatePresence mode="popLayout">
+   540→   540→                  {lostReports.map((report, index) => (
+   541→   541→                    <motion.div
+   542→   542→                      key={report.id}
+   543→   543→                      layout
+   544→   544→                      initial={{ opacity: 0, y: 20 }}
+   545→   545→                      animate={{ opacity: 1, y: 0 }}
+   546→   546→                      exit={{ opacity: 0, scale: 0.9 }}
+   547→   547→                      transition={{ duration: 0.3, delay: index * 0.05 }}
+   548→   548→                    >
+   549→   549→                      <Card className="overflow-hidden border-red-200 dark:border-red-800">
+   550→   550→                        <div className="h-2 bg-gradient-to-l from-red-400 to-orange-400" />
+   551→   551→                        <CardContent className="p-4 space-y-3">
+   552→   552→                          <div className="flex items-start justify-between gap-2">
+   553→   553→                            <h3 className="font-bold text-base line-clamp-1">
+   554→   554→                              {report.title}
+   555→   555→                            </h3>
+   556→   556→                            <Badge
+   557→   557→                              className={
+   558→   558→                                report.status === 'found'
+   559→   559→                                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 shrink-0'
+   560→   560→                                  : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300 shrink-0'
+   561→   561→                              }
+   562→   562→                            >
+   563→   563→                              {report.status === 'found' ? t('statusFound') : t('statusLost')}
+   564→   564→                            </Badge>
+   565→   565→                          </div>
+   566→   566→
+   567→   567→                          <Badge className={`${CATEGORY_COLORS[report.category] || CATEGORY_COLORS.other} text-xs`}>
+   568→   568→                            {t(CATEGORIES.find((c) => c.id === report.category)?.labelKey || 'catOther')}
+   569→   569→                          </Badge>
+   570→   570→
+   571→   571→                          <p className="text-sm text-muted-foreground line-clamp-2">
+   572→   572→                            {report.description}
+   573→   573→                          </p>
+   574→   574→
+   575→   575→                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+   576→   576→                            <div className="flex items-center gap-1">
+   577→   577→                              <MapPin className="h-3 w-3" />
+   578→   578→                              <span className="line-clamp-1 max-w-[100px]">{report.location}</span>
+   579→   579→                            </div>
+   580→   580→                            <div className="flex items-center gap-1">
+   581→   581→                              <Calendar className="h-3 w-3" />
+   582→   582→                              <span>{formatDate(report.dateLost)}</span>
+   583→   583→                            </div>
+   584→   584→                          </div>
+   585→   585→
+   586→   586→                          {report.reward && (
+   587→   587→                            <div className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
+   588→   588→                              <Gift className="h-3.5 w-3.5" />
+   589→   589→                              <span className="font-semibold">{t('rewardBadge')}: {report.reward}</span>
+   590→   590→                            </div>
+   591→   591→                          )}
+   592→   592→
+   593→   593→                          {/* AI Match Button */}
+   594→   594→                          <AIMatchResults
+   595→   595→                            report={report}
+   596→   596→                            onMatchClick={handleMatchClick}
+   597→   597→                          />
+   598→   598→                        </CardContent>
+   599→   599→                      </Card>
+   600→   600→                    </motion.div>
+   601→   601→                  ))}
+   602→   602→                </AnimatePresence>
+   603→   603→              </div>
+   604→   604→            )}
+   605→   605→          </TabsContent>
+   606→   606→        </Tabs>
+   607→   607→      </main>
+   608→   608→
+   609→   609→      {/* Item Detail Dialog */}
+   610→   610→      <ItemDetailDialog
+   611→   611→        item={selectedItem}
+   612→   612→        open={detailOpen}
+   613→   613→        onOpenChange={setDetailOpen}
+   614→   614→        onItemClaimed={fetchItems}
+   615→   615→      />
+   616→   616→
+   617→   617→      {/* Scroll to Top */}
+   618→   618→      <AnimatePresence>
+   619→   619→        {showScrollTop && (
+   620→   620→          <motion.button
+   621→   621→            initial={{ opacity: 0, scale: 0.8 }}
+   622→   622→            animate={{ opacity: 1, scale: 1 }}
+   623→   623→            exit={{ opacity: 0, scale: 0.8 }}
+   624→   624→            onClick={scrollToTop}
+   625→   625→            className={`fixed bottom-6 z-50 h-12 w-12 rounded-full bg-amber-600 hover:bg-amber-700 text-white shadow-lg shadow-amber-500/30 flex items-center justify-center transition-colors ${dir === 'rtl' ? 'left-6' : 'right-6'}`}
+   626→   626→          >
+   627→   627→            <ArrowUp className="h-5 w-5" />
+   628→   628→          </motion.button>
+   629→   629→        )}
+   630→   630→      </AnimatePresence>
+   631→   631→
+   632→   632→      {/* Footer */}
+   633→   633→      <footer className="bg-muted/50 border-t mt-auto">
+   634→   634→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+   635→   635→          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+   636→   636→            <div className="flex items-center gap-2">
+   637→   637→              <img
+   638→   638→                src="/logo.png"
+   639→   639→                alt={t('appName')}
+   640→   640→                className="h-8 w-8 rounded-lg"
+   641→   641→              />
+   642→   642→              <span className="font-bold text-sm">{t('appName')}</span>
+   643→   643→            </div>
+   644→   644→            <p className="text-sm text-muted-foreground text-center">
+   645→   645→              {t('footerText')} © {new Date().getFullYear()}
+   646→   646→            </p>
+   647→   647→          </div>
+   648→   648→        </div>
+   649→   649→      </footer>
+   650→   650→    </div>
+   651→   651→  )
+   652→   652→}
+   653→   653→

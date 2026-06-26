@@ -1,0 +1,561 @@
+     1→---
+     2→Task ID: 1
+     3→Agent: Main Agent
+     4→Task: Build Lost & Found website (مفقوداتي) - Complete full-stack application
+     5→
+     6→Work Log:
+     7→- Explored project structure and existing components
+     8→- Updated Prisma schema with LostItem model (title, description, category, location, dateFound, imageUrl, contactName, contactPhone, status)
+     9→- Pushed schema to SQLite database
+    10→- Created API routes: GET/POST /api/items and PATCH/DELETE /api/items/[id]
+    11→- Built complete Arabic RTL UI with:
+    12→  - Sticky header with logo, stats badges, and "Report Found Item" button
+    13→  - Hero section with search bar and AI-generated hero image
+    14→  - Category filter chips (9 categories)
+    15→  - Responsive items grid with animated cards
+    16→  - Post Item dialog with full form validation
+    17→  - Item Detail dialog with claim functionality
+    18→  - Sticky footer with branding
+    19→  - Scroll-to-top button
+    20→- Generated hero image using AI Image Generation
+    21→- Seeded database with 10 sample items in Arabic
+    22→- Verified with Agent Browser: all features working (search, category filter, item details, post dialog)
+    23→- Tested mobile and desktop responsive layouts
+    24→- No errors in console or server logs
+    25→
+    26→Stage Summary:
+    27→- Complete Lost & Found website (مفقوداتي) built and verified
+    28→- Features: search, category filtering, post found items, claim items, responsive design
+    29→- Tech: Next.js 16, TypeScript, Prisma/SQLite, Tailwind CSS, shadcn/ui, Framer Motion
+    30→- All API endpoints working (200 status)
+    31→- RTL Arabic layout with proper direction
+    32→
+    33→---
+    34→Task ID: 4-map
+    35→Agent: full-stack-developer
+    36→Task: Build map components with Leaflet
+    37→
+    38→Work Log:
+    39→- Read worklog and project structure to understand existing codebase (Lost & Found app with Arabic RTL UI)
+    40→- Created `/home/z/my-project/src/components/lost-found/map-picker.tsx` - Interactive map picker component:
+    41→  - Uses react-leaflet MapContainer, TileLayer, Marker, useMapEvents
+    42→  - Default center on Cairo, Egypt (30.0444, 31.2357)
+    43→  - Click-to-place marker with useMapEvents click handler
+    44→  - Draggable marker that updates on drag end
+    45→  - Calls `onChange(lat, lng)` callback on both click and drag
+    46→  - 200px height, rounded corners, border styling
+    47→  - Shows coordinates label below map (or "click to set location" prompt)
+    48→  - Fixed Leaflet default marker icon issue with CDN URLs
+    49→  - SSR-safe via `useSyncExternalStore` for client detection
+    50→- Created `/home/z/my-project/src/components/lost-found/map-display.tsx` - Read-only map display component:
+    51→  - Shows a static marker at given lat/lng coordinates
+    52→  - All interactions disabled (no dragging, no zoom, no scroll wheel)
+    53→  - 200px height, rounded corners, border styling
+    54→  - Optional title prop and coordinate label below map
+    55→  - Same Leaflet icon fix and SSR-safe pattern
+    56→- Fixed lint errors: replaced `useEffect` + `setState` pattern with `useSyncExternalStore` for client-side detection (avoiding `react-hooks/set-state-in-effect` rule)
+    57→- Verified with `bun run lint` - no errors
+    58→
+    59→Stage Summary:
+    60→- Two reusable map components created: `MapPicker` (interactive) and `MapDisplay` (read-only)
+    61→- Both components are SSR-safe using `useSyncExternalStore` for client detection
+    62→- Leaflet default marker icon fixed with CDN URLs for webpack/Next.js compatibility
+    63→- All lint checks pass with zero errors
+    64→
+    65→---
+    66→Task ID: 2-backend
+    67→Agent: full-stack-developer
+    68→Task: Build all backend API routes
+    69→
+    70→Work Log:
+    71→- Read worklog.md and project structure to understand existing codebase
+    72→- Updated `/home/z/my-project/src/app/api/items/route.ts` POST handler to accept new fields: verificationQuestion, verificationAnswer, reward, latitude, longitude
+    73→- Updated `/home/z/my-project/src/app/api/items/[id]/route.ts` with verification endpoint:
+    74→  - PATCH with `{ action: 'verify', answer: string }` checks answer against verificationAnswer (case-insensitive, trimmed)
+    75→  - Returns `{ verified: true/false }`
+    76→  - Existing status update PATCH still works with `{ status: 'claimed' }`
+    77→- Created `/home/z/my-project/src/app/api/lost-reports/route.ts` with GET (list with filters) and POST (create)
+    78→- Created `/home/z/my-project/src/app/api/lost-reports/[id]/route.ts` with PATCH (update fields/status) and DELETE
+    79→- Created `/home/z/my-project/src/app/api/match/route.ts` - AI Matching endpoint:
+    80→  - Takes `lostReportId` query param
+    81→  - Fetches the LostReport and all found LostItems (status='found')
+    82→  - Uses `z-ai-web-dev-sdk` LLM (ZAI.chat.completions.create) to compare and score matches
+    83→  - Returns top 5 matches sorted by score with enriched item data
+    84→  - LLM prompt instructs matching based on category, description, location, date, and title similarity
+    85→- Updated `/home/z/my-project/seed.ts`:
+    86→  - Added verificationQuestion/verificationAnswer to all 10 LostItem entries
+    87→  - Added reward field (some with amounts, some null)
+    88→  - Added latitude/longitude for Cairo locations
+    89→  - Added 5 LostReport entries matching some found items for AI matching demo
+    90→  - Changed seed to clear existing data before re-seeding
+    91→- Ran `bun run db:push` and `bun run seed.ts` successfully
+    92→- Ran `bun run lint` with zero errors
+    93→- Verified all API endpoints working:
+    94→  - GET /api/items returns items with new fields (verificationQuestion, reward, latitude, longitude)
+    95→  - PATCH /api/items/[id] with verify action returns correct verified: true/false
+    96→  - GET /api/lost-reports returns 5 reports
+    97→  - GET /api/lost-reports?category=electronics filters correctly
+    98→
+    99→Stage Summary:
+   100→- All 6 API route files updated/created:
+   101→  - `/src/app/api/items/route.ts` (updated POST with new fields)
+   102→  - `/src/app/api/items/[id]/route.ts` (added verification endpoint)
+   103→  - `/src/app/api/lost-reports/route.ts` (new: GET/POST)
+   104→  - `/src/app/api/lost-reports/[id]/route.ts` (new: PATCH/DELETE)
+   105→  - `/src/app/api/match/route.ts` (new: AI matching with LLM SDK)
+   106→- Database reseeded with 10 found items (with verification, rewards, coordinates) and 5 lost reports
+   107→- All endpoints tested and working correctly
+   108→- Zero lint errors
+   109→
+   110→---
+   111→Task ID: 2-5-frontend
+   112→Agent: Main Agent
+   113→Task: Implement all 4 advanced features (Verification, AI Matching, Maps, Rewards) in frontend
+   114→
+   115→Work Log:
+   116→- Updated types.ts with LostReport interface, MatchResult interface, and new LostItem fields
+   117→- Fixed Leaflet SSR issue by creating map-picker-inner.tsx and map-display-inner.tsx with dynamic imports (ssr: false)
+   118→- Updated PostItemDialog with: map picker, verification question/answer, reward field
+   119→- Created PostLostReportDialog for reporting lost items
+   120→- Updated ItemDetailDialog with:
+   121→  - Ownership verification flow (answer question to reveal contact info)
+   122→  - Map display for item location
+   123→  - Reward badge display
+   124→  - Hidden contact info (●●●●) until verified
+   125→- Created AIMatchResults component with LLM-powered matching
+   126→- Updated main page.tsx with:
+   127→  - Tabs for "أشياء موجودة" and "بلاغات الفقدان"
+   128→  - Feature pills in hero section
+   129→  - Reward badges on item cards
+   130→  - Verification badge on item cards
+   131→  - Lost reports list with AI match buttons
+   132→- Reseeded database with all new fields
+   133→- Verified with Agent Browser: all 4 features working
+   134→
+   135→Stage Summary:
+   136→- Feature 1 (Ownership Verification): Contact info hidden until question answered correctly ✅
+   137→- Feature 2 (AI Matching): LLM-based matching with score percentages, 5 results per search ✅
+   138→- Feature 3 (Geographic Location): Leaflet/OpenStreetMap maps in post form and detail view ✅
+   139→- Feature 4 (Reward System): Reward badges on cards and detail views ✅
+   140→- All APIs verified working (200 status)
+   141→- Browser testing confirms all features functional
+   142→
+   143→---
+   144→Task ID: 3-security
+   145→Agent: Main Agent
+   146→Task: Implement security & trust features (rate limiting, answer obfuscation, reward terms)
+   147→
+   148→Work Log:
+   149→- Created `/src/lib/security.ts` with:
+   150→  - In-memory rate limiter (3 attempts per item per IP, 15-min lock)
+   151→  - `sanitizeLostItem()` to strip `verificationAnswer` from API responses
+   152→  - `sanitizeLostItems()` for batch sanitization
+   153→- Updated type `LostItem` to remove `verificationAnswer`, add `hasVerification` boolean
+   154→- Updated `GET /api/items` to strip `verificationAnswer` from all responses
+   155→- Updated `POST /api/items` to strip `verificationAnswer` from creation response, made verification Q&A required
+   156→- Updated `PATCH /api/items/[id]` with:
+   157→  - Rate limiting on verify action (3 max attempts, 429 response when locked)
+   158→  - Returns `remainingAttempts` and `rateLimited` fields
+   159→  - Never returns the actual answer
+   160→  - Clears rate limit on successful verification
+   161→- Updated `GET /api/match` to remove contact details from match results (requires verification first)
+   162→- Updated `ItemDetailDialog` with:
+   163→  - Attempts counter display (متبقي X محاولات)
+   164→  - Rate limit lock UI (حظر المحاولات with Ban icon)
+   165→  - 429 status handling
+   166→  - Reward terms & conditions disclaimer (تنويه قانوني)
+   167→- Updated `ai-match-results.tsx` to use safe item structure (no contact info)
+   168→- Updated `page.tsx` to use `hasVerification` instead of `verificationQuestion`
+   169→- Verified with curl: `verificationAnswer` never appears in any API response
+   170→- Verified with Agent Browser: rate limiting works (3 wrong → locked)
+   171→- Verified with browser JS eval: `hasAnswerInResponse: false`
+   172→
+   173→Stage Summary:
+   174→- Security Fix 1 (Rate Limiting): Max 3 verification attempts per item per IP, 15-min lock ✅
+   175→- Security Fix 2 (Answer Obfuscation): verificationAnswer NEVER sent to frontend ✅
+   176→- Security Fix 3 (Reward Terms): Legal disclaimer added to all reward displays ✅
+   177→- All APIs verified: verificationAnswer absent from responses
+   178→- Zero errors in console and lint
+   179→
+   180→---
+   181→Task ID: 4-improvements
+   182→Agent: Main Agent
+   183→Task: Add Dark Mode, Statistics Section, Share Button, and Image Generation
+   184→
+   185→Work Log:
+   186→- Added ThemeProvider from next-themes in layout.tsx with class-based dark mode
+   187→- Added Moon/Sun toggle button in header next to language switcher
+   188→- Added Statistics/Impact section with 4 animated stat cards (Total Reports, Recovered, Available, Lost Reports)
+   189→- Added Share button in ItemDetailDialog (navigator.share + clipboard fallback)
+   190→- Created /api/generate-image endpoint using z-ai-web-dev-sdk for AI image generation
+   191→- Updated PostItemDialog with "Generate Image" button (Wand2 icon) next to imageUrl field
+   192→- Added all translation keys for new features in both Arabic and English
+   193→- Tested all features with Agent Browser: dark mode toggle works, stats visible, share button present, image generation API returns valid base64 images
+   194→- Zero lint errors
+   195→
+   196→Stage Summary:
+   197→- Dark Mode: Full light/dark theme switching with next-themes ✅
+   198→- Statistics Section: 4 animated cards showing community impact ✅
+   199→- Share Button: Web Share API + clipboard fallback ✅
+   200→- Image Generation: AI-powered image creation from item description ✅
+   201→- All features verified working in browser
+   202→
+   203→---
+   204→Task ID: 3-dialogs
+   205→Agent: i18n-dialogs-agent
+   206→Task: Update all dialog components to use the i18n translation system
+   207→
+   208→Work Log:
+   209→- Read worklog.md and all 4 dialog component files
+   210→- Read i18n system: provider.tsx, translations.ts, types.ts
+   211→- Updated `post-item-dialog.tsx`:
+   212→  - Added `const { t, dir } = useI18n()` with import
+   213→  - Replaced all hardcoded Arabic strings with `t()` calls (labels, placeholders, button text, toast messages)
+   214→  - Replaced `dir="rtl"` with `dir={dir}`
+   215→  - Category labels now use `t(cat.labelKey)` instead of `cat.label`
+   216→- Updated `item-detail-dialog.tsx`:
+   217→  - Added `const { t, dir, locale } = useI18n()` with import
+   218→  - Replaced all hardcoded Arabic strings with `t()` calls (section titles, labels, verification states, toasts, reward terms)
+   219→  - Replaced `dir="rtl"` with `dir={dir}`
+   220→  - Category label: `t(CATEGORIES.find((c) => c.id === item.category)?.labelKey || 'catOther')`
+   221→  - Date formatting: `format(date, 'd MMMM yyyy', { locale: locale === 'ar' ? ar : undefined })`
+   222→  - Verification attempts: `t('verifyAttemptsLeft', { count: remainingAttempts, max: MAX_ATTEMPTS })`
+   223→  - Wrong answer message uses `t('verifyWrongAnswer', { count })` and `t('verifyWrongAnswerOne')` for singular
+   224→- Updated `post-lost-report-dialog.tsx`:
+   225→  - Added `const { t, dir } = useI18n()` with import
+   226→  - Replaced all hardcoded Arabic strings with `t()` calls (labels, placeholders, button text, toast messages)
+   227→  - Replaced `dir="rtl"` with `dir={dir}`
+   228→  - Category labels now use `t(cat.labelKey)` instead of `cat.label`
+   229→- Updated `ai-match-results.tsx`:
+   230→  - Added `const { t, locale } = useI18n()` with import
+   231→  - Replaced all hardcoded Arabic strings with `t()` calls (button text, toast messages, score labels, match labels)
+   232→  - Category label: `t(CATEGORIES.find((c) => c.id === match.item?.category)?.labelKey || 'catOther')`
+   233→  - Date formatting: `format(date, 'd MMMM yyyy', { locale: locale === 'ar' ? ar : undefined })`
+   234→  - Empty state message uses `t('matchNoResultsDesc')`
+   235→- Ran `bun run lint` — zero errors
+   236→
+   237→Stage Summary:
+   238→- All 4 dialog components fully migrated to i18n translation system ✅
+   239→- post-item-dialog.tsx: 15+ strings replaced with t() calls ✅
+   240→- item-detail-dialog.tsx: 25+ strings replaced with t() calls, locale-aware date formatting ✅
+   241→- post-lost-report-dialog.tsx: 12+ strings replaced with t() calls ✅
+   242→- ai-match-results.tsx: 10+ strings replaced with t() calls, locale-aware date formatting ✅
+   243→- All dir="rtl" replaced with dir={dir} for dynamic RTL/LTR ✅
+   244→- All category labels use t(cat.labelKey) / t(CATEGORIES.find(...).labelKey) ✅
+   245→- Zero lint errors
+   246→
+   247→---
+   248→Task ID: 3-page
+   249→Agent: i18n-updater
+   250→Task: Update main page.tsx to use i18n translation system
+   251→
+   252→Work Log:
+   253→- Read worklog.md and existing code to understand full context
+   254→- Read `/src/lib/i18n/` module (provider.tsx, translations.ts, index.ts) and `/src/lib/types.ts` (CATEGORIES now uses labelKey)
+   255→- Updated `/src/app/page.tsx` with full i18n integration:
+   256→  - Added `import { useI18n } from '@/lib/i18n'` and `import { Globe } from 'lucide-react'`
+   257→  - Added `const { t, dir, locale, setLocale } = useI18n()` at component top
+   258→  - Replaced `dir="rtl"` with `dir={dir}` on root div
+   259→  - Replaced ALL hardcoded Arabic text with `t('key')` calls (20+ replacements):
+   260→    - App name, tagline, description
+   261→    - Hero section titles
+   262→    - Feature pills (verification, AI, map, reward)
+   263→    - Stats badges (available, recovered)
+   264→    - Tab labels (found items, lost reports)
+   265→    - Category labels (cat.label → t(cat.labelKey))
+   266→    - Status badges (available, claimed, found, lost)
+   267→    - Empty states (no items, no reports, filtered)
+   268→    - View details text
+   269→    - Reward badge label
+   270→    - Verification badge
+   271→    - Footer text
+   272→  - Updated `formatDate()` to use locale-aware formatting: `locale === 'ar' ? ar : undefined`
+   273→  - Added Language Switcher button (Globe icon) in header between stats and action buttons
+   274→  - Changed category label rendering: `cat.label` → `t(cat.labelKey)`
+   275→  - Changed `CATEGORIES.find(...)?.label` → `t(CATEGORIES.find(...)?.labelKey || 'catOther')`
+   276→  - Made directional CSS classes dynamic based on `dir` (search icon position, badge positions, scroll-to-top button)
+   277→- Fixed lint error in `/src/lib/i18n/provider.tsx`:
+   278→  - Replaced `useEffect` + `setState` pattern (react-hooks/set-state-in-effect) with lazy state initializer
+   279→  - `useState<Locale>(getInitialLocale)` reads from localStorage on client, defaults to 'ar' on server
+   280→- Ran `bun run lint` with zero errors
+   281→- Verified dev server running without errors
+   282→
+   283→Stage Summary:
+   284→- page.tsx fully internationalized: all hardcoded Arabic replaced with t() calls ✅
+   285→- Language Switcher (Globe icon) added to header, toggles AR/EN ✅
+   286→- Locale-aware date formatting (Arabic months vs English) ✅
+   287→- Dynamic RTL/LTR layout with dir={dir} ✅
+   288→- Category labels use t(cat.labelKey) from i18n translations ✅
+   289→- Lint error in provider.tsx fixed (lazy state initializer) ✅
+   290→- Zero lint errors
+   291→
+   292→---
+   293→Task ID: improvements-image
+   294→Agent: full-stack-developer
+   295→Task: Create image generation API and update post form to support image generation
+   296→
+   297→Work Log:
+   298→- Read worklog.md to understand project context (Lost & Found app with Arabic/English i18n, verification, AI matching, maps, rewards)
+   299→- Read existing PostItemDialog component and translations file
+   300→- Created `/home/z/my-project/src/app/api/generate-image/route.ts`:
+   301→  - POST endpoint accepting `{ prompt }` in request body
+   302→  - Uses `z-ai-web-dev-sdk` to generate image via `zai.images.generations.create()`
+   303→  - Enhances prompt with "realistic photo of a lost item" and "professional product photography style" instructions
+   304→  - Returns `{ imageUrl: data:image/png;base64,... }` on success
+   305→  - Returns 400 if no prompt, 500 on generation failure
+   306→- Updated `/home/z/my-project/src/components/lost-found/post-item-dialog.tsx`:
+   307→  - Imported `Wand2` icon from lucide-react
+   308→  - Added `generatingImage` state for loading indicator
+   309→  - Changed imageUrl label from `t('labelImageUrl')` to `t('labelImageGen')`
+   310→  - Wrapped imageUrl Input in flex container with "Generate Image" button
+   311→  - Button sends category + title + description as prompt to `/api/generate-image`
+   312→  - Button disabled when generating or when title is empty
+   313→  - Shows Loader2 spinner while generating, Wand2 icon otherwise
+   314→  - On success: updates form imageUrl and shows success toast
+   315→  - On error: shows destructive toast
+   316→- Added translation keys to BOTH ar and en in `/home/z/my-project/src/lib/i18n/translations.ts`:
+   317→  - `labelImageGen`: 'الصورة (اختياري - أدخل رابط أو ولّد صورة)' / 'Image (optional - enter URL or generate)'
+   318→  - `imageGenerated`: 'تم توليد الصورة بنجاح!' / 'Image generated successfully!'
+   319→  - `btnGenerateImage`: 'توليد صورة' / 'Generate Image'
+   320→- Ran `bun run lint` with zero errors
+   321→- Dev server running without errors
+   322→
+   323→Stage Summary:
+   324→- Image Generation API endpoint created at `/api/generate-image` using z-ai-web-dev-sdk ✅
+   325→- PostItemDialog updated with "Generate Image" button (Wand2 icon) next to imageUrl field ✅
+   326→- Button uses category + title + description as prompt for contextual image generation ✅
+   327→- 3 new i18n translation keys added (labelImageGen, imageGenerated, btnGenerateImage) ✅
+   328→- Zero lint errors, dev server running clean ✅
+   329→
+   330→---
+   331→Task ID: improvements-main
+   332→Agent: Main Agent
+   333→Task: Add Dark Mode, Stats Section, and Share Button to the Lost & Found app
+   334→
+   335→Work Log:
+   336→- Read worklog.md and all relevant source files to understand current state
+   337→- Added ThemeProvider from next-themes to /src/app/layout.tsx:
+   338→  - Imported `ThemeProvider` from 'next-themes'
+   339→  - Wrapped `<I18nProvider>` with `<ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>`
+   340→  - `suppressHydrationWarning` already present on `<html>`
+   341→- Added Dark Mode toggle button in page.tsx header:
+   342→  - Added `Moon`, `Sun` icon imports from lucide-react
+   343→  - Added `useTheme` import from next-themes
+   344→  - Added `const { theme, setTheme } = useTheme()` in component
+   345→  - Added Moon/Sun toggle button next to Globe button in header
+   346→  - Button toggles between 'dark' and 'light' themes
+   347→  - Uses `t('toggleDark')` and `t('toggleLight')` for title/tooltip
+   348→- Added Statistics/Impact section between Hero and Main Content in page.tsx:
+   349→  - 4 animated stat cards in a 2-col mobile / 4-col desktop grid
+   350→  - Total Reports (Package icon, amber), Recovered (CheckCircle2 icon, green)
+   351→  - Available for Return (Clock icon, amber), Lost Reports (Sparkles icon, purple)
+   352→  - Each card uses motion.div with staggered fade-in animations
+   353→  - Dark mode compatible border colors
+   354→- Added Share Button to item-detail-dialog.tsx:
+   355→  - Added `Share2` icon import from lucide-react
+   356→  - Added share button after the Claim Button, shown when `item.status === 'found'`
+   357→  - Uses `navigator.share` API when available, falls back to clipboard copy
+   358→  - Toast notification on clipboard copy with `t('shareCopied')` translation
+   359→- Added 8 translation keys to both ar and en sections in translations.ts:
+   360→  - statTotalItems, statRecovered, statAvailable, statReports
+   361→  - btnShare, shareCopied
+   362→  - toggleDark, toggleLight
+   363→- Ran `bun run lint` with zero errors
+   364→- Verified dev server running without errors
+   365→
+   366→Stage Summary:
+   367→- Dark Mode: ThemeProvider added to layout, Moon/Sun toggle in header ✅
+   368→- Stats Section: 4 animated stat cards between Hero and Main Content ✅
+   369→- Share Button: Share2 button in ItemDetailDialog with navigator.share/clipboard fallback ✅
+   370→- 8 new translation keys added to both AR and EN ✅
+   371→- Zero lint errors
+   372→
+   373→---
+   374→Task ID: 7
+   375→Agent: Main Agent
+   376→Task: Add pets category, make dark-mode-only, prepare for Vercel deployment
+   377→
+   378→Work Log:
+   379→- Added 'pets' category to CATEGORIES array in /src/lib/types.ts with PawPrint icon and teal color scheme
+   380→- Added catPets translation keys in both Arabic (حيوانات أليفة) and English (Pets) in /src/lib/i18n/translations.ts
+   381→- Added PawPrint import and pets entry to CATEGORY_ICONS in /src/app/page.tsx
+   382→- Added 2 pet found items (gray cat, brown Shih Tzu dog) and 1 pet lost report (white cat) to seed.ts
+   383→- Made site dark-mode-only by:
+   384→  - Changing ThemeProvider to forcedTheme="dark" in layout.tsx
+   385→  - Adding className="dark" to html element
+   386→  - Removing Moon/Sun toggle button from page.tsx header
+   387→  - Removing unused imports (useTheme, Moon, Sun) from page.tsx
+   388→- Created vercel.json with build configuration
+   389→- Created scripts/vercel-deploy.sh deployment script
+   390→- Created .env.example with database URL documentation
+   391→- Installed Vercel CLI (v54.17.3) but couldn't authenticate (no credentials in sandbox)
+   392→- Verified all changes with Agent Browser: dark mode enforced, pets category works, filtering works
+   393→
+   394→Stage Summary:
+   395→- Pets category added with teal color scheme, Arabic/English translations, and 3 seed items ✅
+   396→- Dark mode is now forced (no toggle, no light mode option) ✅
+   397→- Vercel deployment prepared but requires user authentication ✅
+   398→- Vercel deployment requires: (1) vercel login, (2) create Vercel Postgres database, (3) switch Prisma to PostgreSQL, (4) deploy
+   399→- All changes verified with Agent Browser - no issues found ✅
+   400→
+   401→---
+   402→Task ID: 8
+   403→Agent: Main Agent
+   404→Task: Prepare Vercel deployment with PostgreSQL and guide user
+   405→
+   406→Work Log:
+   407→- Attempted to install Vercel CLI - succeeded (v54.17.3) but no authentication credentials
+   408→- Created prisma/schema.vercel.prisma - PostgreSQL version of schema for Vercel deployment
+   409→- Created /src/app/api/seed/route.ts - POST endpoint to seed database on Vercel serverless
+   410→- Updated package.json: added postinstall script (prisma generate), updated build script, added seed script
+   411→- Created vercel.json with Next.js framework configuration
+   412→- Created DEPLOY.md with step-by-step deployment guide in both Arabic and English
+   413→- Updated scripts/vercel-deploy.sh deployment automation script
+   414→- Local development kept on SQLite (no PostgreSQL available in sandbox)
+   415→- Provided two deployment methods: Vercel Dashboard (recommended) and Vercel CLI
+   416→
+   417→Stage Summary:
+   418→- Vercel deployment fully prepared with PostgreSQL schema, seed API, and documentation ✅
+   419→- User needs to: (1) push code to GitHub, (2) import to Vercel, (3) create Vercel Postgres, (4) deploy ✅
+   420→- No Vercel credentials available in sandbox - user must deploy from their own machine ✅
+   421→
+   422→---
+   423→Task ID: 9
+   424→Agent: Main Agent
+   425→Task: Deploy Mafqudati to Vercel with PostgreSQL database
+   426→
+   427→Work Log:
+   428→- Authenticated GitHub CLI with user's token
+   429→- Created GitHub repository: https://github.com/avatarpP0/mafqudati
+   430→- Pushed code to GitHub main branch
+   431→- Deployed to Vercel using vercel --prod with token
+   432→- User created Neon PostgreSQL database from Vercel dashboard (confirmed via screenshot)
+   433→- DATABASE_URL and 17 other env vars automatically added to Vercel project
+   434→- Created /api/setup endpoint that uses raw SQL to create tables (prisma db push doesn't work in serverless)
+   435→- Created /api/seed endpoint for reseeding data
+   436→- Called /api/setup successfully: 12 found items + 6 lost reports seeded
+   437→- Verified API endpoints return correct data
+   438→- Production URL: https://my-project-plum-eta-13.vercel.app
+   439→
+   440→Stage Summary:
+   441→- Full deployment to Vercel completed successfully ✅
+   442→- PostgreSQL database (Neon) created and connected ✅
+   443→- Schema created via raw SQL in setup endpoint ✅
+   444→- Data seeded successfully (12 items + 6 reports) ✅
+   445→- GitHub repo: https://github.com/avatarpP0/mafqudati ✅
+   446→- Production URL: https://my-project-plum-eta-13.vercel.app ✅
+   447→
+   448→---
+   449→Task ID: 1
+   450→Agent: pwa-agent
+   451→Task: Implement PWA (Progressive Web App) support
+   452→
+   453→Work Log:
+   454→- Created `/public/manifest.json` with:
+   455→  - App name: "مفقوداتي | Mafqudati", short name: "مفقوداتي"
+   456→  - Theme color: #1a1a2e, background color: #0f0f23
+   457→  - Display: standalone, start URL: /
+   458→  - Icons referencing /logo.png (192x192 and 512x512, any maskable)
+   459→  - Lang: ar, dir: rtl
+   460→  - Arabic and English description
+   461→- Created `/public/sw.js` - Service Worker with:
+   462→  - Cache name: 'mafqudati-v1'
+   463→  - Cache-first strategy for static assets (with stale-while-revalidate update)
+   464→  - Network-first strategy for API calls (/api/*) with cache fallback
+   465→  - Offline fallback page for navigation requests
+   466→  - Old cache cleanup on activate
+   467→  - Static asset pre-caching on install
+   468→- Updated `/src/app/layout.tsx`:
+   469→  - Added `<link rel="manifest" href="/manifest.json" />` in head
+   470→  - Added `<meta name="theme-color" content="#1a1a2e" />`
+   471→  - Added `<meta name="apple-mobile-web-app-capable" content="yes" />`
+   472→  - Added `<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />`
+   473→  - Added `<link rel="apple-touch-icon" href="/logo.png" />`
+   474→  - Added `manifest: "/manifest.json"` to metadata export
+   475→- Created `/src/hooks/use-pwa.ts`:
+   476→  - Client-only hook using 'use client' directive
+   477→  - Registers service worker on mount via navigator.serviceWorker.register('/sw.js')
+   478→  - Uses `useSyncExternalStore` for SSR-safe standalone detection
+   479→  - Listens for `beforeinstallprompt` event
+   480→  - Provides `canInstall`, `isInstalled`, and `install()` function
+   481→  - `install()` triggers the deferred install prompt and returns success/failure
+   482→- Created `/src/components/pwa-install-button.tsx`:
+   483→  - Client component using 'use client'
+   484→  - Uses `Download` icon from lucide-react
+   485→  - Uses shadcn/ui Button component (ghost variant, icon size)
+   486→  - Uses `useI18n` hook for i18n support (Arabic/English)
+   487→  - Uses `useToast` for showing installed notification
+   488→  - Hidden when app is already installed or not installable
+   489→  - Shows toast with `t('pwaInstalled')` when install succeeds
+   490→- Added PWA install button to header in `/src/app/page.tsx`:
+   491→  - Added `<PWAInstallButton />` next to Globe (language switcher) button
+   492→  - Imported component from `@/components/pwa-install-button`
+   493→- Added translation keys to `/src/lib/i18n/translations.ts`:
+   494→  - `pwaInstall`: 'تثبيت التطبيق' / 'Install App'
+   495→  - `pwaInstalled`: 'تم تثبيت التطبيق!' / 'App installed!'
+   496→- Fixed lint error: replaced `useEffect` + `setState` for isInstalled check with `useSyncExternalStore` for SSR-safe standalone detection
+   497→- Ran `bun run lint` with zero errors
+   498→
+   499→Stage Summary:
+   500→- PWA manifest.json created with full Arabic/English support ✅
+   501→- Service Worker with cache-first (static) and network-first (API) strategies ✅
+   502→- Layout.tsx updated with all PWA meta tags and manifest link ✅
+   503→- usePWA hook with service worker registration and install prompt handling ✅
+   504→- PWA install button component with i18n and toast support ✅
+   505→- Install button added to header next to language switcher ✅
+   506→- 2 translation keys added (pwaInstall, pwaInstalled) ✅
+   507→- Zero lint errors ✅
+   508→
+   509→---
+   510→Task ID: 2
+   511→Agent: full-stack-developer
+   512→Task: Implement real image upload using Vercel Blob
+   513→
+   514→Work Log:
+   515→- Read worklog.md and project context (Mafqudati Lost & Found app with i18n, verification, AI matching, maps, rewards, dark mode)
+   516→- Read existing post-item-dialog.tsx, translations.ts, and project structure
+   517→- Installed @vercel/blob@2.5.0 package
+   518→- Created `/home/z/my-project/src/app/api/upload/route.ts`:
+   519→  - POST endpoint accepting FormData with a file
+   520→  - Uses `put()` from @vercel/blob to upload to Vercel Blob storage
+   521→  - Generates unique filename with `lost-found/{timestamp}-{random}.{ext}` pattern
+   522→  - Validates file type: only JPEG, PNG, WebP, GIF allowed
+   523→  - Validates file size: 5MB maximum
+   524→  - Returns `{ url: blob.url }` on success
+   525→  - Proper error handling for invalid files and upload failures
+   526→- Updated `/home/z/my-project/src/components/lost-found/post-item-dialog.tsx`:
+   527→  - Replaced simple imageUrl text input with a full file upload experience
+   528→  - Added drag & drop zone with Upload icon and instructional text
+   529→  - Added click-to-upload via hidden file input
+   530→  - Shows local preview immediately when file is selected (FileReader)
+   531→  - Shows upload progress with Progress bar component
+   532→  - Shows final blob URL preview after successful upload
+   533→  - X button to clear/remove uploaded image
+   534→  - Kept "Generate Image" button (Wand2 icon) for AI-generated images
+   535→  - Added "Enter image URL manually" button (ImagePlus icon) as collapsed fallback
+   536→  - Manual URL input shown only when toggled, hidden when image is set
+   537→  - All new text uses i18n t() calls for Arabic/English support
+   538→  - New state: uploading, uploadProgress, imagePreview, showManualUrl, isDragOver
+   539→  - New refs: fileInputRef for hidden file input
+   540→  - File validation on client side (type + size) with toast error messages
+   541→- Added 8 translation keys to BOTH ar and en in `/home/z/my-project/src/lib/i18n/translations.ts`:
+   542→  - uploadImage: 'رفع صورة' / 'Upload Image'
+   543→  - uploadDropzone: 'اسحب الصورة هنا أو اضغط للاختيار' / 'Drag & drop image here or click to select'
+   544→  - uploadSuccess: 'تم رفع الصورة بنجاح!' / 'Image uploaded successfully!'
+   545→  - uploadError: 'خطأ في رفع الصورة' / 'Error uploading image'
+   546→  - uploadTooLarge: 'حجم الصورة كبير جداً (الحد 5 ميجا)' / 'Image too large (5MB limit)'
+   547→  - uploadInvalidType: 'نوع الملف غير مدعوم' / 'Invalid file type'
+   548→  - uploadOr: 'أو' / 'or'
+   549→  - uploadManualUrl: 'أدخل رابط صورة يدوياً' / 'Enter image URL manually'
+   550→- Ran `bun run lint` — only pre-existing error in use-pwa.ts (not related to changes), zero new errors/warnings
+   551→
+   552→Stage Summary:
+   553→- Vercel Blob upload API endpoint created at `/api/upload` ✅
+   554→- File upload with drag & drop in PostItemDialog ✅
+   555→- Image preview, progress bar, and clear functionality ✅
+   556→- Client-side file validation (type: jpeg/png/webp/gif, size: 5MB max) ✅
+   557→- "Generate Image" button preserved alongside upload ✅
+   558→- Manual URL input available as collapsed fallback ✅
+   559→- 8 new i18n translation keys added for both Arabic and English ✅
+   560→- Zero new lint errors ✅
+   561→

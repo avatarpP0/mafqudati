@@ -11,7 +11,7 @@ datasource db {
 }
 
 model LostItem {
-  id                    String   @id @default(cuid())
+  id                    String    @id @default(cuid())
   title                 String
   description           String
   category              String
@@ -20,18 +20,20 @@ model LostItem {
   imageUrl              String?
   contactName           String
   contactPhone          String
-  status                String   @default("found")
+  status                String    @default("found")
   verificationQuestion  String?
   verificationAnswer    String?
   reward                String?
   latitude              Float?
   longitude             Float?
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  reports               Report[]
+  favorites             Favorite[]
 }
 
 model LostReport {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   title        String
   description  String
   category     String
@@ -40,7 +42,32 @@ model LostReport {
   contactName  String
   contactPhone String
   reward       String?
-  status       String   @default("active")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  status       String    @default("active")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  reports      Report[]
+  favorites    Favorite[]
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  itemType    String   // "lostItem" or "lostReport"
+  itemId      String
+  reason      String   // "fake", "inappropriate", "wrong_info", "other"
+  details     String?
+  createdAt   DateTime @default(now())
+  lostItem    LostItem? @relation(fields: [itemId], references: [id])
+  lostReport  LostReport? @relation(fields: [itemId], references: [id])
+}
+
+model Favorite {
+  id          String   @id @default(cuid())
+  itemType    String   // "lostItem" or "lostReport"
+  itemId      String
+  sessionId   String   // Browser session/fingerprint for anonymous users
+  createdAt   DateTime @default(now())
+  lostItem    LostItem? @relation(fields: [itemId], references: [id])
+  lostReport  LostReport? @relation(fields: [itemId], references: [id])
+
+  @@unique([itemType, itemId, sessionId])
 }
