@@ -1,8 +1,19 @@
-import { db } from '@/lib/db'
 import { NextResponse } from 'next/server'
+import { execSync } from 'child_process'
 
 export async function POST() {
   try {
+    // Push Prisma schema to the database
+    console.log('Pushing Prisma schema to database...')
+    execSync('npx prisma db push --skip-generate', {
+      stdio: 'pipe',
+      env: { ...process.env },
+    })
+    console.log('Schema pushed successfully!')
+
+    // Now seed the database by calling the seed endpoint logic
+    const { db } = await import('@/lib/db')
+
     // Clear existing data
     await db.lostItem.deleteMany()
     await db.lostReport.deleteMany()
@@ -281,12 +292,12 @@ export async function POST() {
 
     return NextResponse.json({
       success: true,
-      message: `Seeded ${items.length} found items and ${lostReports.length} lost reports`,
+      message: `Setup complete! Pushed schema and seeded ${items.length} found items and ${lostReports.length} lost reports.`,
     })
   } catch (error) {
-    console.error('Seed error:', error)
+    console.error('Setup error:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to seed database' },
+      { success: false, error: String(error) },
       { status: 500 }
     )
   }
