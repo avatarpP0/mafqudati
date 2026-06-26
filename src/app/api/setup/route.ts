@@ -1,18 +1,54 @@
 import { NextResponse } from 'next/server'
-import { execSync } from 'child_process'
+import { db } from '@/lib/db'
 
 export async function POST() {
   try {
-    // Push Prisma schema to the database
-    console.log('Pushing Prisma schema to database...')
-    execSync('npx prisma db push --skip-generate', {
-      stdio: 'pipe',
-      env: { ...process.env },
-    })
-    console.log('Schema pushed successfully!')
+    // Use Prisma's raw SQL to create tables since prisma db push
+    // doesn't work in serverless environments
+    console.log('Creating tables using raw SQL...')
 
-    // Now seed the database by calling the seed endpoint logic
-    const { db } = await import('@/lib/db')
+    await db.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "LostItem" (
+        "id" TEXT NOT NULL,
+        "title" TEXT NOT NULL,
+        "description" TEXT NOT NULL,
+        "category" TEXT NOT NULL,
+        "location" TEXT NOT NULL,
+        "dateFound" TIMESTAMP(3) NOT NULL,
+        "imageUrl" TEXT,
+        "contactName" TEXT NOT NULL,
+        "contactPhone" TEXT NOT NULL,
+        "status" TEXT NOT NULL DEFAULT 'found',
+        "verificationQuestion" TEXT,
+        "verificationAnswer" TEXT,
+        "reward" TEXT,
+        "latitude" DOUBLE PRECISION,
+        "longitude" DOUBLE PRECISION,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT "LostItem_pkey" PRIMARY KEY ("id")
+      );
+    `)
+
+    await db.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "LostReport" (
+        "id" TEXT NOT NULL,
+        "title" TEXT NOT NULL,
+        "description" TEXT NOT NULL,
+        "category" TEXT NOT NULL,
+        "location" TEXT NOT NULL,
+        "dateLost" TIMESTAMP(3) NOT NULL,
+        "contactName" TEXT NOT NULL,
+        "contactPhone" TEXT NOT NULL,
+        "reward" TEXT,
+        "status" TEXT NOT NULL DEFAULT 'active',
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT "LostReport_pkey" PRIMARY KEY ("id")
+      );
+    `)
+
+    console.log('Tables created successfully!')
 
     // Clear existing data
     await db.lostItem.deleteMany()
@@ -292,7 +328,7 @@ export async function POST() {
 
     return NextResponse.json({
       success: true,
-      message: `Setup complete! Pushed schema and seeded ${items.length} found items and ${lostReports.length} lost reports.`,
+      message: `Setup complete! Created tables and seeded ${items.length} found items and ${lostReports.length} lost reports.`,
     })
   } catch (error) {
     console.error('Setup error:', error)
