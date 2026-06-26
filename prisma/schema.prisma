@@ -28,8 +28,6 @@ model LostItem {
   longitude             Float?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
-  reports               Report[]    @relation("ReportLostItem")
-  favorites             Favorite[]  @relation("FavoriteLostItem")
 }
 
 model LostReport {
@@ -45,8 +43,6 @@ model LostReport {
   status       String    @default("active")
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
-  reports      Report[]    @relation("ReportLostReport")
-  favorites    Favorite[]  @relation("FavoriteLostReport")
 }
 
 model Report {
@@ -56,8 +52,6 @@ model Report {
   reason      String   // "fake", "inappropriate", "wrong_info", "other"
   details     String?
   createdAt   DateTime @default(now())
-  lostItem    LostItem?   @relation("ReportLostItem", fields: [itemId], references: [id], onDelete: Cascade)
-  lostReport  LostReport? @relation("ReportLostReport", fields: [itemId], references: [id], onDelete: Cascade)
 }
 
 model Favorite {
@@ -66,8 +60,6 @@ model Favorite {
   itemId      String
   sessionId   String   // Browser session/fingerprint for anonymous users
   createdAt   DateTime @default(now())
-  lostItem    LostItem?   @relation("FavoriteLostItem", fields: [itemId], references: [id], onDelete: Cascade)
-  lostReport  LostReport? @relation("FavoriteLostReport", fields: [itemId], references: [id], onDelete: Cascade)
 
   @@unique([itemType, itemId, sessionId])
 }
